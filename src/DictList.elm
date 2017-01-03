@@ -356,11 +356,16 @@ remove key dictList =
 
 
 {-| Update the value for a specific key with a given function. Maintains
-the order of the key.
+the order of the key, or inserts it at the end if it is new.
 -}
 update : comparable -> (Maybe v -> Maybe v) -> DictList comparable v -> DictList comparable v
-update key alter (DictList dict list) =
-    DictList (Dict.update key alter dict) list
+update key alter dictList =
+    case alter (get key dictList) of
+        Nothing ->
+            remove key dictList
+
+        Just value ->
+            insert key value dictList
 
 
 {-| Create a `DictList` with one key-value pair.
