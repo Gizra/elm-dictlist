@@ -24,10 +24,30 @@ module DictList
         , values
         , toList
         , fromList
-          -- List-oriented
+          -- core `List`
+        , cons
+        , head
+        , tail
+        , indexedMap
+        , filterMap
+        , length
+        , reverse
+        , all
+        , any
+        , append
+        , concat
+        , sum
+        , product
+        , maximum
+        , minimum
+        , take
+        , drop
+        , sort
+        , sortBy
+        , sortWith
+          -- list-oriented
         , getAt
         , getKeyAt
-        , head
         , indexOfKey
         , insertAfter
         , next
@@ -70,8 +90,10 @@ For list-like manipulations which are not exposed yet, you can use `keys`,
 a modified `DictList`.
 
 @docs keys, values, toList, fromList
+@docs cons, head, tail, indexedMap, filterMap, length, reverse, all, any, append, concat
+@docs sum, product, maximum, minimum, take, drop, sort, sortBy, sortWith
 @docs getAt, getKeyAt, indexOfKey
-@docs head, insertAfter, next, previous
+@docs insertAfter, next, previous
 
 # Transform
 @docs map, foldl, foldr, filter, partition
@@ -169,9 +191,9 @@ decodeArray keyMapper valueDecoder =
 
 
 
-----------------
--- List-oriented
-----------------
+----------------------
+-- From `List` in core
+----------------------
 --
 -- We'll gradually add more list-oriented functions as we figure out what we
 -- need. In the meantime, one generic alternative is to use `keys`, `values` or
@@ -179,6 +201,253 @@ decodeArray keyMapper valueDecoder =
 -- `fromList` to recreate a modified `DictList`. But we can often be more
 -- efficient than that by writing optimized versions of list-like functions
 -- here.
+
+
+{-| Insert a key-value pair at the front. Moves the key to the front if
+    it already exists.
+-}
+cons : comparable -> value -> DictList comparable value -> DictList comparable value
+cons key value (DictList dict list) =
+    let
+        restOfList =
+            if Dict.member key dict then
+                List.Extra.remove key list
+            else
+                list
+    in
+        DictList
+            (Dict.insert key value dict)
+            (key :: restOfList)
+
+
+{-| Gets the first key with its value.
+-}
+head : DictList comparable value -> Maybe ( comparable, value )
+head (DictList dict list) =
+    List.head list
+        `Maybe.andThen` (\key -> Dict.get key dict |> Maybe.map (\value -> ( key, value )))
+
+
+{-| Extract the rest of the keys, with their values.
+-}
+tail : DictList comparable value -> Maybe (List ( comparable, value ))
+tail (DictList dict list) =
+    List.tail list
+        |> Maybe.map (List.map (\key -> ( key, unsafeGet key dict )))
+
+
+{-| Like `map` but the function is also given the index of each
+element (starting at zero).
+-}
+indexedMap : (Int -> comparable -> a -> b) -> DictList comparable a -> DictList comparable b
+indexedMap func =
+    let
+        go key value ( index, DictList dict list ) =
+            ( index + 1
+            , DictList
+                (Dict.insert key (func index key value) dict)
+                (key :: list)
+            )
+    in
+        foldr go ( 0, empty ) >> snd
+
+
+{-| Apply a function that may succeed to all key-value pairs, but only keep
+the successes.
+-}
+filterMap : (comparable -> a -> Maybe b) -> DictList comparable a -> DictList comparable b
+filterMap func =
+    let
+        go key value acc =
+            func key value
+                |> Maybe.map (\result -> cons key result acc)
+                |> Maybe.withDefault acc
+    in
+        foldr go empty
+
+
+{-| The number of key-value pairs in the `DictList`.
+-}
+length : DictList key value -> Int
+length =
+    size
+
+
+{-| Reverse the order of the key-value pairs.
+-}
+reverse : DictList key value -> DictList key value
+reverse (DictList dict list) =
+    DictList dict (List.reverse list)
+
+
+{-| Determine if all elements satisfy the predicate.
+-}
+all : (comparable -> value -> Bool) -> DictList comparable value -> Bool
+all func dictList =
+    not (any (\key value -> not (func key value)) dictList)
+
+
+{-| Determine if any elements satisfy the predicate.
+-}
+any : (comparable -> value -> Bool) -> DictList comparable value -> Bool
+any func (DictList dict list) =
+    let
+        go innerList =
+            case innerList of
+                [] ->
+                    False
+
+                first :: rest ->
+                    if func first (unsafeGet first dict) then
+                        True
+                    else
+                        go rest
+    in
+        go list
+
+
+{-| Put two dictionaries together.
+
+* If keys collide, preference is given to the value from the first `DictList`.
+
+* Keys already in the first `DictList` will remain in their original order.
+
+* Keys newly added from the second `DictList` will be added at the end.
+-}
+append : DictList comparable value -> DictList comparable value -> DictList comparable value
+append =
+    union
+
+
+{-| Concatenate a bunch of dictionaries into a single dictionary.
+
+Works from left to right, applying `append` as it goes.
+-}
+concat : List (DictList comparable value) -> DictList comparable value
+concat lists =
+    List.foldr append empty lists
+
+
+{-| Get the sum of the values.
+-}
+sum : DictList comparable number -> number
+sum (DictList dict list) =
+    Dict.foldl (always (+)) 0 dict
+
+
+{-| Get the product of the values.
+-}
+product : DictList comparable number -> number
+product (DictList dict list) =
+    Dict.foldl (always (*)) 1 dict
+
+
+{-| Find the maximum value. Returns `Nothing` if empty.
+-}
+maximum : DictList comparable1 comparable2 -> Maybe comparable2
+maximum (DictList dict list) =
+    let
+        go _ value acc =
+            case acc of
+                Nothing ->
+                    Just value
+
+                Just bestSoFar ->
+                    Just <| max bestSoFar value
+    in
+        Dict.foldl go Nothing dict
+
+
+{-| Find the minimum value. Returns `Nothing` if empty.
+-}
+minimum : DictList comparable1 comparable2 -> Maybe comparable2
+minimum (DictList dict list) =
+    let
+        go _ value acc =
+            case acc of
+                Nothing ->
+                    Just value
+
+                Just bestSoFar ->
+                    Just <| min bestSoFar value
+    in
+        Dict.foldl go Nothing dict
+
+
+{-| Take the first *n* values.
+-}
+take : Int -> DictList comparable value -> DictList comparable value
+take n (DictList dict list) =
+    let
+        newList =
+            List.take n list
+
+        newDict =
+            List.foldl go Dict.empty newList
+
+        go key =
+            Dict.insert key (unsafeGet key dict)
+    in
+        DictList newDict newList
+
+
+{-| Drop the first *n* values.
+-}
+drop : Int -> DictList comparable value -> DictList comparable value
+drop n (DictList dict list) =
+    let
+        newList =
+            List.drop n list
+
+        newDict =
+            List.foldl go Dict.empty newList
+
+        go key =
+            Dict.insert key (unsafeGet key dict)
+    in
+        DictList newDict newList
+
+
+{-| Sort values from lowest to highest
+-}
+sort : DictList comparable1 comparable2 -> DictList comparable1 comparable2
+sort dictList =
+    case dictList of
+        DictList dict list ->
+            toList dictList
+                |> List.sortBy snd
+                |> List.map fst
+                |> DictList dict
+
+
+{-| Sort values by a derived property.
+-}
+sortBy : (value -> comparable) -> DictList comparable2 value -> DictList comparable2 value
+sortBy func dictList =
+    case dictList of
+        DictList dict list ->
+            toList dictList
+                |> List.sortBy (func << snd)
+                |> List.map fst
+                |> DictList dict
+
+
+{-| Sort values with a custom comparison function.
+-}
+sortWith : (value -> value -> Order) -> DictList comparable value -> DictList comparable value
+sortWith func dictList =
+    case dictList of
+        DictList dict list ->
+            toList dictList
+                |> List.sortWith (\v1 v2 -> func (snd v1) (snd v2))
+                |> List.map fst
+                |> DictList dict
+
+
+
+----------------
+-- List-oriented
+----------------
 
 
 {-| Given a key, what index does that key occupy (0-based) in the
@@ -222,14 +491,6 @@ getAt index (DictList dict list) =
                 Dict.get key dict
                     |> Maybe.map (\value -> ( key, value ))
             )
-
-
-{-| Gets the first key with its value.
--}
-head : DictList comparable value -> Maybe ( comparable, value )
-head (DictList dict list) =
-    List.head list
-        `Maybe.andThen` (\key -> Dict.get key dict |> Maybe.map (\value -> ( key, value )))
 
 
 {-| Insert a key-value pair into a `DictList`, replacing an existing value if
@@ -379,8 +640,8 @@ singleton key value =
 -- COMBINE
 
 
-{-| Combine two dictionaries. If there is a collision, preference is given
-to the first `DictList`.
+{-| Combine two dictionaries. If keys collide, preference is given
+to the value from the first `DictList`.
 
 Keys already in the first `DictList` will remain in their original order.
 
@@ -487,12 +748,7 @@ foldl : (comparable -> v -> b -> b) -> b -> DictList comparable v -> b
 foldl func accum (DictList dict list) =
     let
         go key acc =
-            case Dict.get key dict of
-                Just value ->
-                    func key value acc
-
-                Nothing ->
-                    Debug.crash "Internal error: DictList list not in sync with dict"
+            func key (unsafeGet key dict) acc
     in
         List.foldl go accum list
 
@@ -574,3 +830,21 @@ toList dict =
 fromList : List ( comparable, v ) -> DictList comparable v
 fromList assocs =
     List.foldl (\( key, value ) dict -> insert key value dict) empty assocs
+
+
+
+-----------
+-- Internal
+-----------
+
+
+{-| For cases where we know the key must be in the `Dict`.
+-}
+unsafeGet : comparable -> Dict comparable value -> value
+unsafeGet key dict =
+    case Dict.get key dict of
+        Just value ->
+            value
+
+        Nothing ->
+            Debug.crash "Internal error: DictList list not in sync with dict"
