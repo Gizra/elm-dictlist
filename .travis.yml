@@ -1,0 +1,10 @@
+language: node_js
+node_js: 5
+env:
+  - PATH=./node_modules/.bin:$PATH
+install:
+  - npm install
+  - elm-package install -y
+  - pushd tests && elm-package install -y && popd
+script:
+  - elm-test
