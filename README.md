@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Gizra/elm-dictlist.svg?branch=master)](https://travis-ci.org/Gizra/elm-dictlist)
+
 # elm-dictlist
 
 Have you ever wanted a `Dict`, but you need to maintain an arbitrary
