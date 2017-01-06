@@ -3,7 +3,6 @@ module DictList.Compat
         ( customDecoder
         , first
         , maybeAndThen
-        , range
         , second
         )
 
@@ -52,10 +51,3 @@ first =
 second : ( a, b ) -> b
 second =
     Tuple.second
-
-
-{-| The Elm 0.18 version of `List.range`
--}
-range : Int -> Int -> List Int
-range =
-    List.range

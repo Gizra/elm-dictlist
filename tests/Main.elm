@@ -16,5 +16,5 @@ main =
 all : Test
 all =
     describe "All tests"
-        [ DictTests.all
+        [ DictTests.tests
         ]
