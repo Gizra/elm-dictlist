@@ -106,7 +106,8 @@ a modified `DictList`.
 -}
 
 import Dict exposing (Dict)
-import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue, customDecoder)
+import DictList.Compat exposing (customDecoder, first, maybeAndThen, second)
+import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
 import List.Extra
 
 
@@ -225,7 +226,7 @@ cons key value (DictList dict list) =
 head : DictList comparable value -> Maybe ( comparable, value )
 head (DictList dict list) =
     List.head list
-        `Maybe.andThen` (\key -> Dict.get key dict |> Maybe.map (\value -> ( key, value )))
+        |> maybeAndThen (\key -> Dict.get key dict |> Maybe.map (\value -> ( key, value )))
 
 
 {-| Extract the rest of the keys, with their values.
@@ -249,7 +250,7 @@ indexedMap func =
                 (key :: list)
             )
     in
-        foldr go ( 0, empty ) >> snd
+        foldr go ( 0, empty ) >> second
 
 
 {-| Apply a function that may succeed to all key-value pairs, but only keep
@@ -415,8 +416,8 @@ sort dictList =
     case dictList of
         DictList dict list ->
             toList dictList
-                |> List.sortBy snd
-                |> List.map fst
+                |> List.sortBy second
+                |> List.map first
                 |> DictList dict
 
 
@@ -427,8 +428,8 @@ sortBy func dictList =
     case dictList of
         DictList dict list ->
             toList dictList
-                |> List.sortBy (func << snd)
-                |> List.map fst
+                |> List.sortBy (func << second)
+                |> List.map first
                 |> DictList dict
 
 
@@ -439,8 +440,8 @@ sortWith func dictList =
     case dictList of
         DictList dict list ->
             toList dictList
-                |> List.sortWith (\v1 v2 -> func (snd v1) (snd v2))
-                |> List.map fst
+                |> List.sortWith (\v1 v2 -> func (second v1) (second v2))
+                |> List.map first
                 |> DictList dict
 
 
@@ -463,7 +464,7 @@ indexOfKey key (DictList dict list) =
 next : comparable -> DictList comparable value -> Maybe ( comparable, value )
 next key dictlist =
     indexOfKey key dictlist
-        `Maybe.andThen` \index -> getAt (index + 1) dictlist
+        |> maybeAndThen (\index -> getAt (index + 1) dictlist)
 
 
 {-| Gets the key and value at the previous position.
@@ -471,7 +472,7 @@ next key dictlist =
 previous : comparable -> DictList comparable value -> Maybe ( comparable, value )
 previous key dictlist =
     indexOfKey key dictlist
-        `Maybe.andThen` \index -> getAt (index - 1) dictlist
+        |> maybeAndThen (\index -> getAt (index - 1) dictlist)
 
 
 {-| Gets the key at the specified index.
@@ -486,7 +487,7 @@ getKeyAt index (DictList dict list) =
 getAt : Int -> DictList comparable value -> Maybe ( comparable, value )
 getAt index (DictList dict list) =
     List.Extra.getAt index list
-        `Maybe.andThen`
+        |> maybeAndThen
             (\key ->
                 Dict.get key dict
                     |> Maybe.map (\value -> ( key, value ))

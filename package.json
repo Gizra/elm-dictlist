@@ -8,8 +8,8 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "elm": "^0.17.1",
-    "elm-test": "^0.17.1"
+    "elm": "^0.18.0",
+    "elm-test": "^0.18.0"
   },
   "scripts": {
     "test": "elm-test --compiler ../node_modules/.bin/elm-make"

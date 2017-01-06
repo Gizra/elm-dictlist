@@ -7,6 +7,7 @@ We import `DictList` as `Dict` to limit the code modifications below
 -}
 
 import DictList as Dict exposing (DictList)
+import DictList.Compat exposing (range)
 import Expect exposing (Expectation)
 import Test exposing (..)
 
@@ -94,10 +95,10 @@ mergeTests =
             Dict.empty |> Dict.insert "u2" [ 3 ]
 
         b1 =
-            List.map (\i -> ( i, [ i ] )) [1..10] |> Dict.fromList
+            List.map (\i -> ( i, [ i ] )) (range 1 10) |> Dict.fromList
 
         b2 =
-            List.map (\i -> ( i, [ i ] )) [5..15] |> Dict.fromList
+            List.map (\i -> ( i, [ i ] )) (range 5 15) |> Dict.fromList
 
         bExpected =
             [ ( 1, [ 1 ] ), ( 2, [ 2 ] ), ( 3, [ 3 ] ), ( 4, [ 4 ] ), ( 5, [ 5, 5 ] ), ( 6, [ 6, 6 ] ), ( 7, [ 7, 7 ] ), ( 8, [ 8, 8 ] ), ( 9, [ 9, 9 ] ), ( 10, [ 10, 10 ] ), ( 11, [ 11 ] ), ( 12, [ 12 ] ), ( 13, [ 13 ] ), ( 14, [ 14 ] ), ( 15, [ 15 ] ) ]

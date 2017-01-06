@@ -9,7 +9,6 @@ import Test.Runner.Node exposing (run)
 port emit : ( String, Value ) -> Cmd msg
 
 
-main : Program Value
 main =
     run emit all
 
