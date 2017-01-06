@@ -4,7 +4,7 @@
     "repository": "https://github.com/gizra/elm-dict-list.git",
     "license": "MIT",
     "source-directories": [
-        ".",
+        "src",
         "../src"
     ],
     "exposed-modules": [

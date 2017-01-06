@@ -12,7 +12,7 @@
     "elm-test": "^0.18.0"
   },
   "scripts": {
-    "test": "elm-test --compiler ../node_modules/.bin/elm-make"
+    "test": "elm-test tests/src/Main.elm --compiler ../node_modules/.bin/elm-make"
   },
   "repository": {
     "type": "git",

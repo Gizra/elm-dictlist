@@ -2,6 +2,7 @@ port module Main exposing (..)
 
 import DictTests
 import Json.Encode exposing (Value)
+import ListTests
 import Test exposing (..)
 import Test.Runner.Node exposing (run)
 
@@ -17,4 +18,5 @@ all : Test
 all =
     describe "All tests"
         [ DictTests.tests
+        , ListTests.tests
         ]

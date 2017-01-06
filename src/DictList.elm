@@ -650,7 +650,7 @@ Keys newly added from the second `DictList` will be added at the end.
 -}
 union : DictList comparable v -> DictList comparable v -> DictList comparable v
 union t1 t2 =
-    foldl insert t2 t1
+    foldr cons t2 t1
 
 
 {-| Keep a key-value pair when its key appears in the second `DictList`.
