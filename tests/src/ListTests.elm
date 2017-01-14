@@ -1,5 +1,9 @@
 module ListTests exposing (tests)
 
+{-| This is an adaptation of the `List` tests in elm-lang/core, in order
+to test whether we are a well-behaved list.
+-}
+
 import Test exposing (..)
 import Expect exposing (Expectation)
 import Maybe exposing (Maybe(Nothing, Just))
