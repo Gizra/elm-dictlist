@@ -12,6 +12,15 @@ import Result exposing (Result(..))
 import Test exposing (..)
 
 
+{-| Fuzz a DictList, given a fuzzer for the keys and values.
+-}
+fuzzDictList : Fuzzer comparable -> Fuzzer value -> Fuzzer (DictList comparable value)
+fuzzDictList fuzzKey fuzzValue =
+    Fuzz.tuple ( fuzzKey, fuzzValue )
+        |> Fuzz.list
+        |> Fuzz.map DictList.fromList
+
+
 {-| We make our own JSON string because Elm doesn't normally promise
 anything about the order of values in a JSON object. So, we make sure
 that the order in the JSON string is well-known, so we can test
@@ -158,8 +167,38 @@ jsonTests =
         ]
 
 
+consTest : Test
+consTest =
+    fuzz3 Fuzz.int
+        Fuzz.int
+        (fuzzDictList Fuzz.int Fuzz.int)
+        "cons"
+        (\key value dictList ->
+            let
+                expectedSize result =
+                    DictList.size result
+                        |> Expect.equal
+                            (if DictList.member key dictList then
+                                DictList.size dictList
+                             else
+                                DictList.size dictList + 1
+                            )
+
+                expectedHead result =
+                    DictList.head result
+                        |> Expect.equal (Just ( key, value ))
+            in
+                DictList.cons key value dictList
+                    |> Expect.all
+                        [ expectedSize
+                        , expectedHead
+                        ]
+        )
+
+
 tests : Test
 tests =
     describe "DictList tests"
         [ jsonTests
+        , consTest
         ]
