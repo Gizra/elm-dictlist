@@ -56,6 +56,8 @@ module DictList
         , decodeObject
         , decodeWithKeys
         , decodeArray
+          -- Conversion
+        , toDict
         )
 
 {-| Have you ever wanted a `Dict`, but you need to maintain an arbitrary
@@ -83,13 +85,15 @@ operations on an association list, but other functions may be slower.
 # Query
 @docs isEmpty, member, get, size
 
+#Convert
+@docs keys, values, toList, fromList, toDict
+
 # Lists
 
 For list-like manipulations which are not exposed yet, you can use `keys`,
 `values`, or `toList` to get a list, and then possibly `fromList` to create
 a modified `DictList`.
 
-@docs keys, values, toList, fromList
 @docs cons, head, tail, indexedMap, filterMap, length, reverse, all, any, append, concat
 @docs sum, product, maximum, minimum, take, drop, sort, sortBy, sortWith
 @docs getAt, getKeyAt, indexOfKey
@@ -144,7 +148,9 @@ type DictList k v
 enumerable properties. Fails if _any_ value can't be decoded with the given
 decoder.
 
-The order of the values in the JSON will be preserved in the `DictList`.
+Unfortunately, it is not possible to preserve the apparent order of the keys in
+the JSON, because the keys in Javascript objects are fundamentally un-ordered.
+Thus, you will typically need to use `decodeWithKeys` or `decodeArray` instead.
 -}
 decodeObject : Decoder a -> Decoder (DictList String a)
 decodeObject decoder =
@@ -831,6 +837,13 @@ toList dict =
 fromList : List ( comparable, v ) -> DictList comparable v
 fromList assocs =
     List.foldl (\( key, value ) dict -> insert key value dict) empty assocs
+
+
+{-| Extract a `Dict` from a `DictList`
+-}
+toDict : DictList comparable v -> Dict comparable v
+toDict (DictList dict list) =
+    dict
 
 
 
