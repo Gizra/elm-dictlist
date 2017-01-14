@@ -55,6 +55,7 @@ module DictList
           -- JSON
         , decodeObject
         , decodeWithKeys
+        , decodeKeysAndValues
         , decodeArray
           -- Conversion
         , toDict
@@ -106,7 +107,7 @@ a modified `DictList`.
 @docs union, intersect, diff, merge
 
 # JSON
-@docs decodeObject, decodeArray, decodeWithKeys
+@docs decodeObject, decodeArray, decodeWithKeys, decodeKeysAndValues
 -}
 
 import Dict exposing (Dict)
@@ -184,6 +185,17 @@ decodeWithKeys keys func =
     in
         customDecoder value
             (\jsonValue -> List.foldl (go jsonValue) (Ok empty) keys)
+
+
+{-| Like `decodeWithKeys`, but you supply a decoder for the keys, rather than the keys themselves.
+
+Note that the starting point for all decoders will be the same place, so you need to construct your
+decoders in a way that makes that work.
+-}
+decodeKeysAndValues : Decoder (List comparable) -> (comparable -> Decoder value) -> Decoder (DictList comparable value)
+decodeKeysAndValues keyDecoder func =
+    keyDecoder
+        |> Json.Decode.andThen (\keys -> decodeWithKeys keys func)
 
 
 {-| Given a decoder for the value, and a way of turning the value into a key,

@@ -7,7 +7,7 @@ things not necessarily tested by the `DictTests` or the `ListTests`.
 import DictList exposing (DictList)
 import Expect
 import Fuzz exposing (Fuzzer)
-import Json.Decode exposing (Decoder, field)
+import Json.Decode as JD exposing (Decoder, field)
 import Result exposing (Result(..))
 import Test exposing (..)
 
@@ -82,9 +82,51 @@ type alias ValueWithId =
 
 decodeValueWithId : Decoder ValueWithId
 decodeValueWithId =
-    Json.Decode.map2 ValueWithId
-        (field "id" Json.Decode.int)
-        (field "value" Json.Decode.int)
+    JD.map2 ValueWithId
+        (field "id" JD.int)
+        (field "value" JD.int)
+
+
+{-| Like `jsonObjectAndExpectedResult`, but the JSON looks like this:
+
+    { keys: [ ]
+    , dict: {  }
+    }
+
+... that is, we list an array of keys separately, so that we can preserve
+order.
+-}
+jsonKeysObjectAndExpectedResult : Fuzzer ( String, DictList String Int )
+jsonKeysObjectAndExpectedResult =
+    Fuzz.tuple ( Fuzz.int, Fuzz.int )
+        |> Fuzz.list
+        |> Fuzz.map
+            (\list ->
+                let
+                    go ( key, value ) ( jsonKeys, jsonDict, expected ) =
+                        if DictList.member (toString key) expected then
+                            ( jsonKeys, jsonDict, expected )
+                        else
+                            ( ("\"" ++ toString key ++ "\"") :: jsonKeys
+                            , ("\"" ++ toString key ++ "\": " ++ toString value) :: jsonDict
+                            , DictList.cons (toString key) value expected
+                            )
+                in
+                    list
+                        |> List.foldr go ( [], [], DictList.empty )
+                        |> (\( jsonKeys, jsonDict, expected ) ->
+                                let
+                                    keys =
+                                        "\"keys\": [" ++ String.join ", " jsonKeys ++ "]"
+
+                                    dict =
+                                        "\"dict\": {" ++ String.join ", " jsonDict ++ "}"
+                                in
+                                    ( "{" ++ keys ++ ", " ++ dict ++ "}"
+                                    , expected
+                                    )
+                           )
+            )
 
 
 jsonTests : Test
@@ -93,14 +135,26 @@ jsonTests =
         [ fuzz jsonObjectAndExpectedResult "decodeObject gets the expected dict (not necessarily order)" <|
             \( json, expected ) ->
                 json
-                    |> Json.Decode.decodeString (DictList.decodeObject Json.Decode.int)
+                    |> JD.decodeString (DictList.decodeObject JD.int)
                     |> Result.map DictList.toDict
                     |> Expect.equal (Ok (DictList.toDict expected))
         , fuzz jsonArrayAndExpectedResult "decodeArray preserves order" <|
             \( json, expected ) ->
                 json
-                    |> Json.Decode.decodeString (DictList.decodeArray .id decodeValueWithId)
+                    |> JD.decodeString (DictList.decodeArray .id decodeValueWithId)
                     |> Expect.equal (Ok expected)
+        , fuzz jsonKeysObjectAndExpectedResult "decodeWithKeys gets expected result" <|
+            \( json, expected ) ->
+                let
+                    keyDecoder =
+                        field "keys" (JD.list JD.string)
+
+                    valueDecoder key =
+                        JD.at [ "dict", key ] JD.int
+                in
+                    json
+                        |> JD.decodeString (DictList.decodeKeysAndValues keyDecoder valueDecoder)
+                        |> Expect.equal (Ok expected)
         ]
 
 
