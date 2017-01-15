@@ -247,12 +247,17 @@ head (DictList dict list) =
         |> maybeAndThen (\key -> Dict.get key dict |> Maybe.map (\value -> ( key, value )))
 
 
-{-| Extract the rest of the keys, with their values.
+{-| Extract the rest of the `DictList`, without the first key/value pair.
 -}
-tail : DictList comparable value -> Maybe (List ( comparable, value ))
+tail : DictList comparable value -> Maybe (DictList comparable value)
 tail (DictList dict list) =
-    List.tail list
-        |> Maybe.map (List.map (\key -> ( key, unsafeGet key dict )))
+    case list of
+        first :: rest ->
+            Just <|
+                DictList (Dict.remove first dict) rest
+
+        _ ->
+            Nothing
 
 
 {-| Like `map` but the function is also given the index of each
