@@ -273,7 +273,10 @@ indexedMap func =
                 (key :: list)
             )
     in
-        foldr go ( 0, empty ) >> second
+        -- We need to foldl, because the first element should get the 0 index.
+        -- But we build up the resulting list with `::`, for efficiency, so
+        -- we reverse once at the end.
+        foldl go ( 0, empty ) >> second >> reverse
 
 
 {-| Apply a function that may succeed to all key-value pairs, but only keep

@@ -196,9 +196,73 @@ consTest =
         )
 
 
+headTailConsTest : Test
+headTailConsTest =
+    fuzz (fuzzDictList Fuzz.int Fuzz.int)
+        "headTailCons"
+        (\subject ->
+            let
+                run =
+                    Maybe.map2 (uncurry DictList.cons)
+                        (DictList.head subject)
+                        (DictList.tail subject)
+
+                expected =
+                    if DictList.size subject == 0 then
+                        Nothing
+                    else
+                        Just subject
+            in
+                Expect.equal expected run
+        )
+
+
+indexedMapTest : Test
+indexedMapTest =
+    fuzz (fuzzDictList Fuzz.int Fuzz.int)
+        "indexedMap"
+        (\subject ->
+            let
+                go index key value =
+                    { index = index
+                    , key = key
+                    , value = value
+                    }
+
+                listIndexes =
+                    DictList.keys subject
+                        |> List.indexedMap (\index _ -> index)
+
+                expectIndexes values =
+                    values
+                        |> List.map .index
+                        |> Expect.equal listIndexes
+
+                expectKeys values =
+                    values
+                        |> List.map .key
+                        |> Expect.equal (DictList.keys subject)
+
+                expectValues values =
+                    values
+                        |> List.map .value
+                        |> Expect.equal (DictList.values subject)
+            in
+                DictList.indexedMap go subject
+                    |> DictList.values
+                    |> Expect.all
+                        [ expectIndexes
+                        , expectKeys
+                        , expectValues
+                        ]
+        )
+
+
 tests : Test
 tests =
     describe "DictList tests"
         [ jsonTests
         , consTest
+        , headTailConsTest
+        , indexedMapTest
         ]
