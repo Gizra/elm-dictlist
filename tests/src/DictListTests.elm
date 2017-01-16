@@ -258,6 +258,16 @@ indexedMapTest =
         )
 
 
+filterMapTest : Test
+filterMapTest =
+    fuzz (fuzzDictList Fuzz.int Fuzz.int)
+        "filterMap retains order"
+        (\subject ->
+            DictList.filterMap (\_ v -> Just v) subject
+                |> Expect.equal subject
+        )
+
+
 tests : Test
 tests =
     describe "DictList tests"
@@ -265,4 +275,5 @@ tests =
         , consTest
         , headTailConsTest
         , indexedMapTest
+        , filterMapTest
         ]
