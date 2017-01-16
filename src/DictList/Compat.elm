@@ -9,7 +9,7 @@ module DictList.Compat
 {-| This module consists of functions used by `DictList` which need to
 be different in Elm 0.17 and 0.18. This allows us to easily maintain
 an internal version of `DictList` for use in Elm 0.17 projects (importing
-a different versio of this file), while publishing an Elm 0.18 version.
+a different version of this file), while publishing an Elm 0.18 version.
 -}
 
 import Json.Decode exposing (Decoder, succeed, fail)
