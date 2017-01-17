@@ -50,6 +50,7 @@ module DictList
         , getKeyAt
         , indexOfKey
         , insertAfter
+        , insertBefore
         , next
         , previous
           -- JSON
