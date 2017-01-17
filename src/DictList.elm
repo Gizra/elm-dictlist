@@ -558,6 +558,44 @@ insertAfter afterKey key value (DictList dict list) =
         DictList newDict newList
 
 
+{-| Insert a key-value pair into a `DictList`, replacing an existing value if
+the keys collide. The key will be inserted before the first parameter (whether
+or not the key already exists). If the first parameter cannot be found, the
+key will be inserted at the beginning.
+-}
+insertBefore : comparable -> comparable -> v -> DictList comparable v -> DictList comparable v
+insertBefore beforeKey key value (DictList dict list) =
+    let
+        newDict =
+            Dict.insert key value dict
+
+        newList =
+            if beforeKey == key then
+                -- If we want to insert it after itself, we can short-circuit
+                list
+            else
+                let
+                    listWithoutKey =
+                        if Dict.member key dict then
+                            List.Extra.remove key list
+                        else
+                            -- If the key wasn't present, we can skip the removal
+                            list
+                in
+                    case List.Extra.elemIndex beforeKey listWithoutKey of
+                        Just index ->
+                            -- We found the existing element, so take apart the list
+                            -- and put it back together
+                            List.take (index - 1) listWithoutKey
+                                ++ (key :: List.drop (index - 1) listWithoutKey)
+
+                        Nothing ->
+                            -- The beforeKey wasn't found, so we insert the key at the beginning
+                            key :: listWithoutKey
+    in
+        DictList newDict newList
+
+
 
 --------------
 -- From `Dict`
