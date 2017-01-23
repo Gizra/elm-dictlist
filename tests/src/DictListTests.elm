@@ -261,10 +261,38 @@ indexedMapTest =
 filterMapTest : Test
 filterMapTest =
     fuzz (fuzzDictList Fuzz.int Fuzz.int)
-        "filterMap retains order"
+        "filterMap"
+        (Expect.all
+            [ \subject ->
+                DictList.filterMap (\_ v -> Just v) subject
+                    |> Expect.equal subject
+            , \subject ->
+                DictList.filterMap (\_ v -> Nothing) subject
+                    |> Expect.equal DictList.empty
+            ]
+        )
+
+
+lengthTest : Test
+lengthTest =
+    fuzz (fuzzDictList Fuzz.int Fuzz.int)
+        "length behaves like List.length"
         (\subject ->
-            DictList.filterMap (\_ v -> Just v) subject
-                |> Expect.equal subject
+            subject
+                |> DictList.length
+                |> Expect.equal (DictList.toList subject |> List.length)
+        )
+
+
+reverseTest : Test
+reverseTest =
+    fuzz (fuzzDictList Fuzz.int Fuzz.int)
+        "reverse behaves like List.reverse"
+        (\subject ->
+            subject
+                |> DictList.reverse
+                |> DictList.toList
+                |> Expect.equal (DictList.toList subject |> List.reverse)
         )
 
 
@@ -276,4 +304,6 @@ tests =
         , headTailConsTest
         , indexedMapTest
         , filterMapTest
+        , lengthTest
+        , reverseTest
         ]
