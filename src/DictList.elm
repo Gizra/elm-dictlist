@@ -99,7 +99,7 @@ a modified `DictList`.
 @docs cons, head, tail, indexedMap, filterMap, length, reverse, all, any, append, concat
 @docs sum, product, maximum, minimum, take, drop, sort, sortBy, sortWith
 @docs getAt, getKeyAt, indexOfKey
-@docs insertAfter, next, previous
+@docs insertAfter, insertBefore, next, previous
 
 # Transform
 @docs map, foldl, foldr, filter, partition
