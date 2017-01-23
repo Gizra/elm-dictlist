@@ -1,6 +1,7 @@
 module DictList.Compat
     exposing
         ( customDecoder
+        , decodeAndThen
         , first
         , maybeAndThen
         , second
@@ -13,6 +14,14 @@ a different version of this file), while publishing an Elm 0.18 version.
 -}
 
 import Json.Decode exposing (Decoder, succeed, fail)
+
+
+{-| The Elm 0.18 signature for `Json.Decode.andThen` (incompatible with Elm 0.17's
+version).
+-}
+decodeAndThen : (a -> Decoder b) -> Decoder a -> Decoder b
+decodeAndThen =
+    Json.Decode.andThen
 
 
 {-| The Elm 0.18 signature for `Maybe.andThen` (incompatible with Elm 0.17's

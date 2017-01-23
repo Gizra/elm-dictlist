@@ -112,7 +112,7 @@ a modified `DictList`.
 -}
 
 import Dict exposing (Dict)
-import DictList.Compat exposing (customDecoder, first, maybeAndThen, second)
+import DictList.Compat exposing (customDecoder, decodeAndThen, first, maybeAndThen, second)
 import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
 import List.Extra
 
@@ -196,7 +196,7 @@ decoders in a way that makes that work.
 decodeKeysAndValues : Decoder (List comparable) -> (comparable -> Decoder value) -> Decoder (DictList comparable value)
 decodeKeysAndValues keyDecoder func =
     keyDecoder
-        |> Json.Decode.andThen (\keys -> decodeWithKeys keys func)
+        |> decodeAndThen (\keys -> decodeWithKeys keys func)
 
 
 {-| Given a decoder for the value, and a way of turning the value into a key,
