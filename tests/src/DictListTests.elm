@@ -4,6 +4,7 @@ module DictListTests exposing (tests)
 things not necessarily tested by the `DictTests` or the `ListTests`.
 -}
 
+import Arithmetic exposing (isEven)
 import DictList exposing (DictList)
 import Expect
 import Fuzz exposing (Fuzzer)
@@ -296,6 +297,34 @@ reverseTest =
         )
 
 
+allTest : Test
+allTest =
+    fuzz (fuzzDictList Fuzz.int Fuzz.int)
+        "all behaves like List.all"
+        (\subject ->
+            subject
+                |> DictList.all (\k v -> isEven k && isEven v)
+                |> Expect.equal
+                    (DictList.toList subject
+                        |> List.all (\( k, v ) -> isEven k && isEven v)
+                    )
+        )
+
+
+anyTest : Test
+anyTest =
+    fuzz (fuzzDictList Fuzz.int Fuzz.int)
+        "any behaves like List.any"
+        (\subject ->
+            subject
+                |> DictList.any (\k v -> isEven k && isEven v)
+                |> Expect.equal
+                    (DictList.toList subject
+                        |> List.any (\( k, v ) -> isEven k && isEven v)
+                    )
+        )
+
+
 tests : Test
 tests =
     describe "DictList tests"
@@ -306,4 +335,6 @@ tests =
         , filterMapTest
         , lengthTest
         , reverseTest
+        , allTest
+        , anyTest
         ]
