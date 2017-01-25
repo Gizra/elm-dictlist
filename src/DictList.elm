@@ -336,15 +336,28 @@ any func (DictList dict list) =
 
 {-| Put two dictionaries together.
 
-* If keys collide, preference is given to the value from the first `DictList`.
+If keys collide, preference is given to the value from the second `DictList`.
+Also, the order of the keys in the second `DictList` will be preserved at the
+end of the result.
 
-* Keys already in the first `DictList` will remain in their original order.
+So, you could think of `append` as biased towards the second argument. The end
+of the result should be equal to the second argument, both in value and key-order.
+The front of the result will then be whatever is left from the first argument --
+that is, those keys (and their values) that were not in the second argument.
 
-* Keys newly added from the second `DictList` will be added at the end.
+For a similar function that is biased towards the first argument, see `union`.
 -}
 append : DictList comparable value -> DictList comparable value -> DictList comparable value
-append =
-    union
+append t1 t2 =
+    let
+        go key value acc =
+            -- We're right-favouring, so only act if the key is not already present
+            if member key acc then
+                acc
+            else
+                cons key value acc
+    in
+        foldr go t2 t1
 
 
 {-| Concatenate a bunch of dictionaries into a single dictionary.
@@ -712,6 +725,13 @@ to the value from the first `DictList`.
 Keys already in the first `DictList` will remain in their original order.
 
 Keys newly added from the second `DictList` will be added at the end.
+
+So, you might think of `union` as being biased towards the first argument,
+since it preserves both key-order and values from the first argument, only
+adding things on the right (from the second argument) for keys that were not
+present in the first. This seems to correspond best to the logic of `Dict.union`.
+
+For a similar function that is biased towards the second argument, see `append`.
 -}
 union : DictList comparable v -> DictList comparable v -> DictList comparable v
 union t1 t2 =

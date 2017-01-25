@@ -9,6 +9,7 @@ import DictList exposing (DictList)
 import Expect
 import Fuzz exposing (Fuzzer)
 import Json.Decode as JD exposing (Decoder, field)
+import List.Extra
 import Result exposing (Result(..))
 import Test exposing (..)
 
@@ -325,6 +326,82 @@ anyTest =
         )
 
 
+unionTest : Test
+unionTest =
+    fuzz2
+        (fuzzDictList Fuzz.int Fuzz.int)
+        (fuzzDictList Fuzz.int Fuzz.int)
+        "union"
+        (\left right ->
+            DictList.union left right
+                |> Expect.all
+                    [ \result ->
+                        -- See if we have the expected number of pairs
+                        result
+                            |> DictList.size
+                            |> Expect.equal
+                                (left
+                                    |> DictList.keys
+                                    |> List.append (DictList.keys right)
+                                    |> List.Extra.unique
+                                    |> List.length
+                                )
+                    , \result ->
+                        -- The first part of the result should be equal to
+                        -- the left side of the input, since keys from the left
+                        -- remain in the original order, and we prever values from
+                        -- the left where there are collisions.
+                        result
+                            |> DictList.take (DictList.size left)
+                            |> Expect.equal left
+                    , \result ->
+                        -- The rest of the result should equal what was on the right,
+                        -- without things which were already in left
+                        result
+                            |> DictList.drop (DictList.size left)
+                            |> Expect.equal (DictList.filter (\k _ -> not (DictList.member k left)) right)
+                    ]
+        )
+
+
+appendTest : Test
+appendTest =
+    fuzz2
+        (fuzzDictList Fuzz.int Fuzz.int)
+        (fuzzDictList Fuzz.int Fuzz.int)
+        "append"
+        (\left right ->
+            DictList.append left right
+                |> Expect.all
+                    [ \result ->
+                        -- See if we have the expected number of pairs
+                        result
+                            |> DictList.size
+                            |> Expect.equal
+                                (left
+                                    |> DictList.keys
+                                    |> List.append (DictList.keys right)
+                                    |> List.Extra.unique
+                                    |> List.length
+                                )
+                    , \result ->
+                        -- The last part of the result should be equal to
+                        -- the right side of the input, since keys from the right
+                        -- remain in the original order, and we prever values from
+                        -- the right where there are collisions.
+                        result
+                            |> DictList.drop (DictList.size result - DictList.size right)
+                            |> Expect.equal right
+                    , \result ->
+                        -- The rest of the result should equal what was on the left,
+                        -- without things which were already on the right
+                        result
+                            |> DictList.take (DictList.size result - DictList.size right)
+                            |> Expect.equal (DictList.filter (\k _ -> not (DictList.member k right)) left)
+                    ]
+        )
+
+
 tests : Test
 tests =
     describe "DictList tests"
@@ -337,4 +414,6 @@ tests =
         , reverseTest
         , allTest
         , anyTest
+        , appendTest
+        , unionTest
         ]
