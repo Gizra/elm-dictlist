@@ -176,11 +176,8 @@ jsonTests =
 
 consTest : Test
 consTest =
-    fuzz3 Fuzz.int
-        Fuzz.int
-        (fuzzDictList Fuzz.int Fuzz.int)
-        "cons"
-        (\key value dictList ->
+    fuzz3 Fuzz.int Fuzz.int fuzzIntDictList "cons" <|
+        \key value dictList ->
             let
                 expectedSize result =
                     DictList.size result
@@ -200,14 +197,12 @@ consTest =
                         [ expectedSize
                         , expectedHead
                         ]
-        )
 
 
 headTailConsTest : Test
 headTailConsTest =
-    fuzz (fuzzDictList Fuzz.int Fuzz.int)
-        "headTailCons"
-        (\subject ->
+    fuzz fuzzIntDictList "headTailCons" <|
+        \subject ->
             let
                 run =
                     Maybe.map2 (uncurry DictList.cons)
@@ -221,14 +216,12 @@ headTailConsTest =
                         Just subject
             in
                 Expect.equal expected run
-        )
 
 
 indexedMapTest : Test
 indexedMapTest =
-    fuzz (fuzzDictList Fuzz.int Fuzz.int)
-        "indexedMap"
-        (\subject ->
+    fuzz fuzzIntDictList "indexedMap" <|
+        \subject ->
             let
                 go index key value =
                     { index = index
@@ -262,14 +255,12 @@ indexedMapTest =
                         , expectKeys
                         , expectValues
                         ]
-        )
 
 
 filterMapTest : Test
 filterMapTest =
-    fuzz (fuzzDictList Fuzz.int Fuzz.int)
-        "filterMap"
-        (Expect.all
+    fuzz fuzzIntDictList "filterMap" <|
+        Expect.all
             [ \subject ->
                 DictList.filterMap (\_ v -> Just v) subject
                     |> Expect.equal subject
@@ -277,67 +268,55 @@ filterMapTest =
                 DictList.filterMap (\_ v -> Nothing) subject
                     |> Expect.equal DictList.empty
             ]
-        )
 
 
 lengthTest : Test
 lengthTest =
-    fuzz (fuzzDictList Fuzz.int Fuzz.int)
-        "length behaves like List.length"
-        (\subject ->
+    fuzz fuzzIntDictList "length behaves like List.length" <|
+        \subject ->
             subject
                 |> DictList.length
                 |> Expect.equal (DictList.toList subject |> List.length)
-        )
 
 
 reverseTest : Test
 reverseTest =
-    fuzz (fuzzDictList Fuzz.int Fuzz.int)
-        "reverse behaves like List.reverse"
-        (\subject ->
+    fuzz fuzzIntDictList "reverse behaves like List.reverse" <|
+        \subject ->
             subject
                 |> DictList.reverse
                 |> DictList.toList
                 |> Expect.equal (DictList.toList subject |> List.reverse)
-        )
 
 
 allTest : Test
 allTest =
-    fuzz (fuzzDictList Fuzz.int Fuzz.int)
-        "all behaves like List.all"
-        (\subject ->
+    fuzz fuzzIntDictList "all behaves like List.all" <|
+        \subject ->
             subject
                 |> DictList.all (\k v -> isEven k && isEven v)
                 |> Expect.equal
                     (DictList.toList subject
                         |> List.all (\( k, v ) -> isEven k && isEven v)
                     )
-        )
 
 
 anyTest : Test
 anyTest =
-    fuzz (fuzzDictList Fuzz.int Fuzz.int)
-        "any behaves like List.any"
-        (\subject ->
+    fuzz fuzzIntDictList "any behaves like List.any" <|
+        \subject ->
             subject
                 |> DictList.any (\k v -> isEven k && isEven v)
                 |> Expect.equal
                     (DictList.toList subject
                         |> List.any (\( k, v ) -> isEven k && isEven v)
                     )
-        )
 
 
 unionTest : Test
 unionTest =
-    fuzz2
-        (fuzzDictList Fuzz.int Fuzz.int)
-        (fuzzDictList Fuzz.int Fuzz.int)
-        "union"
-        (\left right ->
+    fuzz2 fuzzIntDictList fuzzIntDictList "union" <|
+        \left right ->
             DictList.union left right
                 |> Expect.all
                     [ \result ->
@@ -366,16 +345,12 @@ unionTest =
                             |> DictList.drop (DictList.size left)
                             |> Expect.equal (DictList.filter (\k _ -> not (DictList.member k left)) right)
                     ]
-        )
 
 
 appendTest : Test
 appendTest =
-    fuzz2
-        (fuzzDictList Fuzz.int Fuzz.int)
-        (fuzzDictList Fuzz.int Fuzz.int)
-        "append"
-        (\left right ->
+    fuzz2 fuzzIntDictList fuzzIntDictList "append" <|
+        \left right ->
             DictList.append left right
                 |> Expect.all
                     [ \result ->
@@ -404,7 +379,6 @@ appendTest =
                             |> DictList.take (DictList.size result - DictList.size right)
                             |> Expect.equal (DictList.filter (\k _ -> not (DictList.member k right)) left)
                     ]
-        )
 
 
 concatTest : Test
