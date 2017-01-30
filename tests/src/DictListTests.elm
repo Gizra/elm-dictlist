@@ -23,6 +23,11 @@ fuzzDictList fuzzKey fuzzValue =
         |> Fuzz.map DictList.fromList
 
 
+fuzzIntDictList : Fuzzer (DictList Int Int)
+fuzzIntDictList =
+    fuzzDictList Fuzz.int Fuzz.int
+
+
 {-| We make our own JSON string because Elm doesn't normally promise
 anything about the order of values in a JSON object. So, we make sure
 that the order in the JSON string is well-known, so we can test
@@ -402,6 +407,36 @@ appendTest =
         )
 
 
+concatTest : Test
+concatTest =
+    describe "concat"
+        [ fuzz fuzzIntDictList "with one dictlist" <|
+            Expect.all
+                [ \subject ->
+                    DictList.concat [ subject, DictList.empty ]
+                        |> Expect.equal subject
+                , \subject ->
+                    DictList.concat [ DictList.empty, subject ]
+                        |> Expect.equal subject
+                , \subject ->
+                    DictList.concat [ subject ]
+                        |> Expect.equal subject
+                ]
+        , test "with empty list" <|
+            \_ ->
+                DictList.concat []
+                    |> Expect.equal DictList.empty
+        , fuzz2 fuzzIntDictList fuzzIntDictList "with two DictList" <|
+            \left right ->
+                DictList.concat [ left, right ]
+                    |> Expect.equal (DictList.append left right)
+        , fuzz3 fuzzIntDictList fuzzIntDictList fuzzIntDictList "with three DictLists" <|
+            \a b c ->
+                DictList.concat [ a, b, c ]
+                    |> Expect.equal (DictList.append (DictList.append a b) c)
+        ]
+
+
 tests : Test
 tests =
     describe "DictList tests"
@@ -416,4 +451,5 @@ tests =
         , anyTest
         , appendTest
         , unionTest
+        , concatTest
         ]
