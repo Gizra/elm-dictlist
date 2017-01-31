@@ -411,6 +411,38 @@ concatTest =
         ]
 
 
+sumTest : Test
+sumTest =
+    fuzz fuzzIntDictList "sum" <|
+        \subject ->
+            DictList.sum subject
+                |> Expect.equal (DictList.values subject |> List.sum)
+
+
+productTest : Test
+productTest =
+    fuzz (fuzzDictList Fuzz.int (Fuzz.intRange -5 5)) "product" <|
+        \subject ->
+            DictList.product subject
+                |> Expect.equal (DictList.values subject |> List.product)
+
+
+maximumTest : Test
+maximumTest =
+    fuzz fuzzIntDictList "maximum" <|
+        \subject ->
+            DictList.maximum subject
+                |> Expect.equal (DictList.values subject |> List.maximum)
+
+
+minimumTest : Test
+minimumTest =
+    fuzz fuzzIntDictList "minimum" <|
+        \subject ->
+            DictList.minimum subject
+                |> Expect.equal (DictList.values subject |> List.minimum)
+
+
 tests : Test
 tests =
     describe "DictList tests"
@@ -426,4 +458,8 @@ tests =
         , appendTest
         , unionTest
         , concatTest
+        , sumTest
+        , productTest
+        , maximumTest
+        , minimumTest
         ]
