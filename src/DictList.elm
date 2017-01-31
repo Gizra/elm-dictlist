@@ -387,6 +387,9 @@ product (DictList dict list) =
 -}
 maximum : DictList comparable1 comparable2 -> Maybe comparable2
 maximum (DictList dict list) =
+    -- I considered having `maximum` and `minimum` return the key
+    -- as well, but there is a bit of a puzzle there. What would
+    -- one do when there are ties for the maximum value?
     let
         go _ value acc =
             case acc of
