@@ -443,6 +443,26 @@ minimumTest =
                 |> Expect.equal (DictList.values subject |> List.minimum)
 
 
+takeTest : Test
+takeTest =
+    fuzz2 Fuzz.int fuzzIntDictList "take" <|
+        \num subject ->
+            subject
+                |> DictList.take num
+                |> DictList.toList
+                |> Expect.equal (DictList.toList subject |> List.take num)
+
+
+dropTest : Test
+dropTest =
+    fuzz2 Fuzz.int fuzzIntDictList "drop" <|
+        \num subject ->
+            subject
+                |> DictList.drop num
+                |> DictList.toList
+                |> Expect.equal (DictList.toList subject |> List.drop num)
+
+
 tests : Test
 tests =
     describe "DictList tests"
@@ -462,4 +482,6 @@ tests =
         , productTest
         , maximumTest
         , minimumTest
+        , takeTest
+        , dropTest
         ]
