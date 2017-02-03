@@ -463,6 +463,53 @@ dropTest =
                 |> Expect.equal (DictList.toList subject |> List.drop num)
 
 
+sortTest : Test
+sortTest =
+    fuzz fuzzIntDictList "sort" <|
+        \subject ->
+            subject
+                |> DictList.sort
+                |> DictList.toList
+                |> Expect.equal (DictList.toList subject |> List.sortBy Tuple.second)
+
+
+sortByTest : Test
+sortByTest =
+    fuzz fuzzIntDictList "sortBy" <|
+        \subject ->
+            let
+                withRecord =
+                    subject
+                        |> DictList.map (\_ value -> { value = value })
+            in
+                withRecord
+                    |> DictList.sortBy .value
+                    |> DictList.toList
+                    |> Expect.equal (DictList.toList withRecord |> List.sortBy (Tuple.second >> .value))
+
+
+sortWithTest : Test
+sortWithTest =
+    fuzz fuzzIntDictList "sortWith" <|
+        \subject ->
+            let
+                reverseOrder a b =
+                    case compare a b of
+                        LT ->
+                            GT
+
+                        EQ ->
+                            EQ
+
+                        GT ->
+                            LT
+            in
+                subject
+                    |> DictList.sortWith reverseOrder
+                    |> DictList.toList
+                    |> Expect.equal (DictList.toList subject |> List.sortWith (\( _, a ) ( _, b ) -> reverseOrder a b))
+
+
 tests : Test
 tests =
     describe "DictList tests"
@@ -484,4 +531,7 @@ tests =
         , minimumTest
         , takeTest
         , dropTest
+        , sortTest
+        , sortByTest
+        , sortWithTest
         ]
