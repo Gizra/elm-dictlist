@@ -70,44 +70,48 @@ by a key? With `DictList`, now you can!
 replacement for it). However, instead of ordering things from lowest
 key to highest key, it allows for an arbitrary ordering.
 
-We also implement parts of the API for `List`, often returning a tuple
-of (key, value) pairs.
+We also implement most of the API for `List`. However, the API is not
+identical, since we need to account for both keys and values.
 
 An alternative would be to maintain your own "association list" -- that is,
-a `List (k, v)` instead of a `DictList k v`. It should be the case that
-`DictList.get` and `DictList.member` perform better than the equivalent
-operations on an association list, but other functions may be slower.
+a `List (k, v)` instead of a `DictList k v`. You can move back and forth
+between an association list and a `DictList` via `toList` and `fromList`.
 
 # DictList
+
 @docs DictList
 
 # Build
+
 @docs empty, singleton, insert, update, remove
-
-# Query
-@docs isEmpty, member, get, size
-
-#Convert
-@docs keys, values, toList, fromList, toDict
-
-# Lists
-
-For list-like manipulations which are not exposed yet, you can use `keys`,
-`values`, or `toList` to get a list, and then possibly `fromList` to create
-a modified `DictList`.
-
-@docs cons, head, tail, indexedMap, filterMap, length, reverse, all, any, append, concat
-@docs sum, product, maximum, minimum, take, drop, sort, sortBy, sortWith
-@docs getAt, getKeyAt, indexOfKey
-@docs insertAfter, insertBefore, next, previous
-
-# Transform
-@docs map, foldl, foldr, filter, partition
+@docs cons, insertAfter, insertBefore
 
 # Combine
+
+@docs append, concat
 @docs union, intersect, diff, merge
 
+# Query
+
+@docs isEmpty, member, get, size
+@docs getAt, getKeyAt, indexOfKey
+@docs take, drop, next, previous
+@docs length, head, tail
+@docs all, any
+@docs sum, product, maximum, minimum
+
+# Transform
+
+@docs map, foldl, foldr, filter, partition
+@docs indexedMap, filterMap, reverse
+@docs sort, sortBy, sortWith
+
+# Convert
+
+@docs keys, values, toList, fromList, toDict
+
 # JSON
+
 @docs decodeObject, decodeArray, decodeWithKeys, decodeKeysAndValues
 -}
 
@@ -214,13 +218,6 @@ decodeArray keyMapper valueDecoder =
 ----------------------
 -- From `List` in core
 ----------------------
---
--- We'll gradually add more list-oriented functions as we figure out what we
--- need. In the meantime, one generic alternative is to use `keys`, `values` or
--- `toList` to get a list, run `List` functions on that, and then possibly
--- `fromList` to recreate a modified `DictList`. But we can often be more
--- efficient than that by writing optimized versions of list-like functions
--- here.
 
 
 {-| Insert a key-value pair at the front. Moves the key to the front if
@@ -502,7 +499,7 @@ indexOfKey key (DictList dict list) =
     List.Extra.elemIndex key list
 
 
-{-| Gets the key and value at the next position.
+{-| Given a key, get the key and value at the next position.
 -}
 next : comparable -> DictList comparable value -> Maybe ( comparable, value )
 next key dictlist =
@@ -510,7 +507,7 @@ next key dictlist =
         |> maybeAndThen (\index -> getAt (index + 1) dictlist)
 
 
-{-| Gets the key and value at the previous position.
+{-| Given a key, get the key and value at the previous position.
 -}
 previous : comparable -> DictList comparable value -> Maybe ( comparable, value )
 previous key dictlist =
@@ -518,14 +515,14 @@ previous key dictlist =
         |> maybeAndThen (\index -> getAt (index - 1) dictlist)
 
 
-{-| Gets the key at the specified index.
+{-| Gets the key at the specified index (0-based).
 -}
 getKeyAt : Int -> DictList key value -> Maybe key
 getKeyAt index (DictList dict list) =
     List.Extra.getAt index list
 
 
-{-| Gets the key and value at the specified index.
+{-| Gets the key and value at the specified index (0-based).
 -}
 getAt : Int -> DictList comparable value -> Maybe ( comparable, value )
 getAt index (DictList dict list) =
@@ -538,9 +535,10 @@ getAt index (DictList dict list) =
 
 
 {-| Insert a key-value pair into a `DictList`, replacing an existing value if
-the keys collide. The key will be inserted after the first parameter (whether
-or not the key already exists). If the first parameter cannot be found, the
-key will be inserted at the end.
+the keys collide. The first parameter represents an existing key, while the
+second parameter is the new key. The new key and value will be inserted after
+the existing key (even if the new key already exists). If the existing key
+cannot be found, the new key/value pair will be inserted at the end.
 -}
 insertAfter : comparable -> comparable -> v -> DictList comparable v -> DictList comparable v
 insertAfter afterKey key value (DictList dict list) =
@@ -576,9 +574,10 @@ insertAfter afterKey key value (DictList dict list) =
 
 
 {-| Insert a key-value pair into a `DictList`, replacing an existing value if
-the keys collide. The key will be inserted before the first parameter (whether
-or not the key already exists). If the first parameter cannot be found, the
-key will be inserted at the beginning.
+the keys collide. The first parameter represents an existing key, while the
+second parameter is the new key. The new key and value will be inserted before
+the existing key (even if the new key already exists). If the existing key
+cannot be found, the new key/value pair will be inserted at the beginning.
 -}
 insertBefore : comparable -> comparable -> v -> DictList comparable v -> DictList comparable v
 insertBefore beforeKey key value (DictList dict list) =
@@ -588,7 +587,7 @@ insertBefore beforeKey key value (DictList dict list) =
 
         newList =
             if beforeKey == key then
-                -- If we want to insert it after itself, we can short-circuit
+                -- If we want to insert it before itself, we can short-circuit
                 list
             else
                 let
@@ -830,8 +829,8 @@ map func (DictList dict list) =
     DictList (Dict.map func dict) list
 
 
-{-| Fold over the key-value pairs in a `DictList`, in order from lowest
-key to highest key (given the arbitrary order maintained by the `DictList`).
+{-| Fold over the key-value pairs in a `DictList`, in order from the first
+key to the last key (given the arbitrary order maintained by the `DictList`).
 -}
 foldl : (comparable -> v -> b -> b) -> b -> DictList comparable v -> b
 foldl func accum (DictList dict list) =
@@ -842,8 +841,8 @@ foldl func accum (DictList dict list) =
         List.foldl go accum list
 
 
-{-| Fold over the key-value pairs in a `DictList`, in order from highest
-key to lowest key (given the arbitrary order maintained by the `DictList`.
+{-| Fold over the key-value pairs in a `DictList`, in order from the last
+key to the first key (given the arbitrary order maintained by the `DictList`.
 -}
 foldr : (comparable -> v -> b -> b) -> b -> DictList comparable v -> b
 foldr func accum (DictList dict list) =

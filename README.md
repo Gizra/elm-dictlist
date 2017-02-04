@@ -10,17 +10,28 @@ by a key? With `DictList`, now you can!
 replacement for it). However, instead of ordering things from lowest
 key to highest key, it allows for an arbitrary ordering.
 
-We also implement parts of the API for `List`, often returning a tuple
-of (key, value) pairs.
+We also implement most of the API for `List`. However, the API is not
+identical, since we need to account for both keys and values.
 
 An alternative would be to maintain your own "association list" -- that is,
-a `List (k, v)` instead of a `DictList k v`. It should be the case that
-`DictList.get` and `DictList.member` perform better than the equivalent
-operations on an association list, but other functions may be slower.
+a `List (k, v)` instead of a `DictList k v`. You can move back and forth
+between an association list and a `DictList` via `toList` and `fromList`.
 
-The code is not as optimized as it could be, yet -- we'll work on covering
-the `List` API more fully first, and then work on various possible optimizations.
+## API
 
 For the detailed API, see the
-[Elm package site](http://package.elm-lang.org/packages/gizra/elm-dict-list/latest),
+[Elm package site](http://package.elm-lang.org/packages/Gizra/elm-dict-list/latest),
 or the links to the right, if you're already there.
+
+## Installation
+
+Try `elm-package install Gizra/elm-dictlist`
+
+## Development
+
+Try something like:
+
+    git clone https://github.com/Gizra/elm-dictlist
+    cd elm-dictlist
+    npm install
+    npm test
