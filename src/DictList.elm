@@ -60,6 +60,7 @@ module DictList
         , decodeArray
           -- Conversion
         , toDict
+        , fromDict
         )
 
 {-| Have you ever wanted a `Dict`, but you need to maintain an arbitrary
@@ -108,7 +109,8 @@ between an association list and a `DictList` via `toList` and `fromList`.
 
 # Convert
 
-@docs keys, values, toList, fromList, toDict
+@docs keys, values, toList, fromList
+@docs toDict, fromDict
 
 # JSON
 
@@ -925,6 +927,14 @@ fromList assocs =
 toDict : DictList comparable v -> Dict comparable v
 toDict (DictList dict list) =
     dict
+
+
+{-| Given a `Dict`, create a `DictList`. The keys will initially be in the
+order that the `Dict` provides.
+-}
+fromDict : Dict comparable v -> DictList comparable v
+fromDict dict =
+    DictList dict (Dict.keys dict)
 
 
 
