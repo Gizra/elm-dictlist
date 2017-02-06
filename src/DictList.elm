@@ -604,8 +604,8 @@ insertBefore beforeKey key value (DictList dict list) =
                         Just index ->
                             -- We found the existing element, so take apart the list
                             -- and put it back together
-                            List.take (index - 1) listWithoutKey
-                                ++ (key :: List.drop (index - 1) listWithoutKey)
+                            List.take index listWithoutKey
+                                ++ (key :: List.drop index listWithoutKey)
 
                         Nothing ->
                             -- The beforeKey wasn't found, so we insert the key at the beginning

@@ -510,174 +510,266 @@ sortWithTest =
                     |> Expect.equal (DictList.toList subject |> List.sortWith (\( _, a ) ( _, b ) -> reverseOrder a b))
 
 
+
+-- Some values used in the next few tests
+
+
+pair1 : ( Int, Int )
+pair1 =
+    ( 1, 101 )
+
+
+pair2 : ( Int, Int )
+pair2 =
+    ( 2, 102 )
+
+
+pair3 : ( Int, Int )
+pair3 =
+    ( 3, 103 )
+
+
+pairs : DictList Int Int
+pairs =
+    DictList.fromList [ pair1, pair2, pair3 ]
+
+
 indexOfKeyTest : Test
 indexOfKeyTest =
-    let
-        subject =
-            DictList.fromList
-                [ ( 1, 101 )
-                , ( 2, 102 )
-                , ( 3, 103 )
-                ]
-    in
-        describe "indexOfKey"
-            [ test "not present" <|
-                \_ ->
-                    subject
-                        |> DictList.indexOfKey 5
-                        |> Expect.equal Nothing
-            , test "first" <|
-                \_ ->
-                    subject
-                        |> DictList.indexOfKey 1
-                        |> Expect.equal (Just 0)
-            , test "second" <|
-                \_ ->
-                    subject
-                        |> DictList.indexOfKey 2
-                        |> Expect.equal (Just 1)
-            , test "third" <|
-                \_ ->
-                    subject
-                        |> DictList.indexOfKey 3
-                        |> Expect.equal (Just 2)
-            ]
+    describe "indexOfKey"
+        [ test "not present" <|
+            \_ ->
+                pairs
+                    |> DictList.indexOfKey 5
+                    |> Expect.equal Nothing
+        , test "first" <|
+            \_ ->
+                pairs
+                    |> DictList.indexOfKey 1
+                    |> Expect.equal (Just 0)
+        , test "second" <|
+            \_ ->
+                pairs
+                    |> DictList.indexOfKey 2
+                    |> Expect.equal (Just 1)
+        , test "third" <|
+            \_ ->
+                pairs
+                    |> DictList.indexOfKey 3
+                    |> Expect.equal (Just 2)
+        ]
 
 
 nextTest : Test
 nextTest =
-    let
-        subject =
-            DictList.fromList
-                [ ( 1, 101 )
-                , ( 2, 102 )
-                , ( 3, 103 )
-                ]
-    in
-        describe "next"
-            [ test "not present" <|
-                \_ ->
-                    subject
-                        |> DictList.next 5
-                        |> Expect.equal Nothing
-            , test "first" <|
-                \_ ->
-                    subject
-                        |> DictList.next 1
-                        |> Expect.equal (Just ( 2, 102 ))
-            , test "second" <|
-                \_ ->
-                    subject
-                        |> DictList.next 2
-                        |> Expect.equal (Just ( 3, 103 ))
-            , test "third" <|
-                \_ ->
-                    subject
-                        |> DictList.next 3
-                        |> Expect.equal Nothing
-            ]
+    describe "next"
+        [ test "not present" <|
+            \_ ->
+                pairs
+                    |> DictList.next 5
+                    |> Expect.equal Nothing
+        , test "first" <|
+            \_ ->
+                pairs
+                    |> DictList.next 1
+                    |> Expect.equal (Just pair2)
+        , test "second" <|
+            \_ ->
+                pairs
+                    |> DictList.next 2
+                    |> Expect.equal (Just pair3)
+        , test "third" <|
+            \_ ->
+                pairs
+                    |> DictList.next 3
+                    |> Expect.equal Nothing
+        ]
 
 
 previousTest : Test
 previousTest =
-    let
-        subject =
-            DictList.fromList
-                [ ( 1, 101 )
-                , ( 2, 102 )
-                , ( 3, 103 )
-                ]
-    in
-        describe "previous"
-            [ test "not present" <|
-                \_ ->
-                    subject
-                        |> DictList.previous 5
-                        |> Expect.equal Nothing
-            , test "first" <|
-                \_ ->
-                    subject
-                        |> DictList.previous 1
-                        |> Expect.equal Nothing
-            , test "second" <|
-                \_ ->
-                    subject
-                        |> DictList.previous 2
-                        |> Expect.equal (Just ( 1, 101 ))
-            , test "third" <|
-                \_ ->
-                    subject
-                        |> DictList.previous 3
-                        |> Expect.equal (Just ( 2, 102 ))
-            ]
+    describe "previous"
+        [ test "not present" <|
+            \_ ->
+                pairs
+                    |> DictList.previous 5
+                    |> Expect.equal Nothing
+        , test "first" <|
+            \_ ->
+                pairs
+                    |> DictList.previous 1
+                    |> Expect.equal Nothing
+        , test "second" <|
+            \_ ->
+                pairs
+                    |> DictList.previous 2
+                    |> Expect.equal (Just pair1)
+        , test "third" <|
+            \_ ->
+                pairs
+                    |> DictList.previous 3
+                    |> Expect.equal (Just pair2)
+        ]
 
 
 getKeyAtTest : Test
 getKeyAtTest =
-    let
-        subject =
-            DictList.fromList
-                [ ( 1, 101 )
-                , ( 2, 102 )
-                , ( 3, 103 )
-                ]
-    in
-        describe "getKeyAt"
-            [ test "not present" <|
-                \_ ->
-                    subject
-                        |> DictList.getKeyAt 5
-                        |> Expect.equal Nothing
-            , test "first" <|
-                \_ ->
-                    subject
-                        |> DictList.getKeyAt 0
-                        |> Expect.equal (Just 1)
-            , test "second" <|
-                \_ ->
-                    subject
-                        |> DictList.getKeyAt 1
-                        |> Expect.equal (Just 2)
-            , test "third" <|
-                \_ ->
-                    subject
-                        |> DictList.getKeyAt 2
-                        |> Expect.equal (Just 3)
-            ]
+    describe "getKeyAt"
+        [ test "not present" <|
+            \_ ->
+                pairs
+                    |> DictList.getKeyAt 5
+                    |> Expect.equal Nothing
+        , test "first" <|
+            \_ ->
+                pairs
+                    |> DictList.getKeyAt 0
+                    |> Expect.equal (Just 1)
+        , test "second" <|
+            \_ ->
+                pairs
+                    |> DictList.getKeyAt 1
+                    |> Expect.equal (Just 2)
+        , test "third" <|
+            \_ ->
+                pairs
+                    |> DictList.getKeyAt 2
+                    |> Expect.equal (Just 3)
+        ]
 
 
 getAtTest : Test
 getAtTest =
-    let
-        subject =
-            DictList.fromList
-                [ ( 1, 101 )
-                , ( 2, 102 )
-                , ( 3, 103 )
-                ]
-    in
-        describe "getAt"
-            [ test "not present" <|
-                \_ ->
-                    subject
-                        |> DictList.getAt 5
-                        |> Expect.equal Nothing
-            , test "first" <|
-                \_ ->
-                    subject
-                        |> DictList.getAt 0
-                        |> Expect.equal (Just ( 1, 101 ))
-            , test "second" <|
-                \_ ->
-                    subject
-                        |> DictList.getAt 1
-                        |> Expect.equal (Just ( 2, 102 ))
-            , test "third" <|
-                \_ ->
-                    subject
-                        |> DictList.getAt 2
-                        |> Expect.equal (Just ( 3, 103 ))
-            ]
+    describe "getAt"
+        [ test "not present" <|
+            \_ ->
+                pairs
+                    |> DictList.getAt 5
+                    |> Expect.equal Nothing
+        , test "first" <|
+            \_ ->
+                pairs
+                    |> DictList.getAt 0
+                    |> Expect.equal (Just pair1)
+        , test "second" <|
+            \_ ->
+                pairs
+                    |> DictList.getAt 1
+                    |> Expect.equal (Just pair2)
+        , test "third" <|
+            \_ ->
+                pairs
+                    |> DictList.getAt 2
+                    |> Expect.equal (Just pair3)
+        ]
+
+
+insertAfterTest : Test
+insertAfterTest =
+    describe "insertAfter"
+        [ test "not present" <|
+            \_ ->
+                pairs
+                    |> DictList.insertAfter 5 17 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , pair2
+                            , pair3
+                            , ( 17, 117 )
+                            ]
+                        )
+        , test "first" <|
+            \_ ->
+                pairs
+                    |> DictList.insertAfter 1 17 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , ( 17, 117 )
+                            , pair2
+                            , pair3
+                            ]
+                        )
+        , test "second" <|
+            \_ ->
+                pairs
+                    |> DictList.insertAfter 2 17 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , pair2
+                            , ( 17, 117 )
+                            , pair3
+                            ]
+                        )
+        , test "third" <|
+            \_ ->
+                pairs
+                    |> DictList.insertAfter 3 17 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , pair2
+                            , pair3
+                            , ( 17, 117 )
+                            ]
+                        )
+        ]
+
+
+insertBeforeTest : Test
+insertBeforeTest =
+    describe "insertBefore"
+        [ test "not present" <|
+            \_ ->
+                pairs
+                    |> DictList.insertBefore 5 17 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ ( 17, 117 )
+                            , pair1
+                            , pair2
+                            , pair3
+                            ]
+                        )
+        , test "first" <|
+            \_ ->
+                pairs
+                    |> DictList.insertBefore 1 17 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ ( 17, 117 )
+                            , pair1
+                            , pair2
+                            , pair3
+                            ]
+                        )
+        , test "second" <|
+            \_ ->
+                pairs
+                    |> DictList.insertBefore 2 17 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , ( 17, 117 )
+                            , pair2
+                            , pair3
+                            ]
+                        )
+        , test "third" <|
+            \_ ->
+                pairs
+                    |> DictList.insertBefore 3 17 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , pair2
+                            , ( 17, 117 )
+                            , pair3
+                            ]
+                        )
+        ]
 
 
 tests : Test
@@ -709,4 +801,6 @@ tests =
         , previousTest
         , getKeyAtTest
         , getAtTest
+        , insertAfterTest
+        , insertBeforeTest
         ]
