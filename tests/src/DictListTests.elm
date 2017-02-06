@@ -809,6 +809,104 @@ isEmptyTest =
                 |> Expect.equal (DictList.toDict subject |> Dict.isEmpty)
 
 
+insertTest : Test
+insertTest =
+    describe "insert"
+        [ test "not present" <|
+            \_ ->
+                pairs
+                    |> DictList.insert 17 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , pair2
+                            , pair3
+                            , ( 17, 117 )
+                            ]
+                        )
+        , test "first" <|
+            \_ ->
+                pairs
+                    |> DictList.insert 1 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ ( 1, 117 )
+                            , pair2
+                            , pair3
+                            ]
+                        )
+        , test "second" <|
+            \_ ->
+                pairs
+                    |> DictList.insert 2 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , ( 2, 117 )
+                            , pair3
+                            ]
+                        )
+        , test "third" <|
+            \_ ->
+                pairs
+                    |> DictList.insert 3 117
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , pair2
+                            , ( 3, 117 )
+                            ]
+                        )
+        ]
+
+
+removeTest : Test
+removeTest =
+    describe "remove"
+        [ test "not present" <|
+            \_ ->
+                pairs
+                    |> DictList.remove 17
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , pair2
+                            , pair3
+                            ]
+                        )
+        , test "first" <|
+            \_ ->
+                pairs
+                    |> DictList.remove 1
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair2
+                            , pair3
+                            ]
+                        )
+        , test "second" <|
+            \_ ->
+                pairs
+                    |> DictList.remove 2
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , pair3
+                            ]
+                        )
+        , test "third" <|
+            \_ ->
+                pairs
+                    |> DictList.remove 3
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ pair1
+                            , pair2
+                            ]
+                        )
+        ]
+
+
 tests : Test
 tests =
     describe "DictList tests"
@@ -844,4 +942,6 @@ tests =
         , memberTest
         , sizeTest
         , isEmptyTest
+        , insertTest
+        , removeTest
         ]
