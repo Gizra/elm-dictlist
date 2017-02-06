@@ -5,6 +5,7 @@ things not necessarily tested by the `DictTests` or the `ListTests`.
 -}
 
 import Arithmetic exposing (isEven)
+import Dict
 import DictList exposing (DictList)
 import Expect
 import Fuzz exposing (Fuzzer)
@@ -772,6 +773,42 @@ insertBeforeTest =
         ]
 
 
+getTest : Test
+getTest =
+    fuzz2 Fuzz.int fuzzIntDictList "get" <|
+        \key subject ->
+            subject
+                |> DictList.get key
+                |> Expect.equal (DictList.toDict subject |> Dict.get key)
+
+
+memberTest : Test
+memberTest =
+    fuzz2 Fuzz.int fuzzIntDictList "member" <|
+        \key subject ->
+            subject
+                |> DictList.member key
+                |> Expect.equal (DictList.toDict subject |> Dict.member key)
+
+
+sizeTest : Test
+sizeTest =
+    fuzz fuzzIntDictList "size" <|
+        \subject ->
+            subject
+                |> DictList.size
+                |> Expect.equal (DictList.toDict subject |> Dict.size)
+
+
+isEmptyTest : Test
+isEmptyTest =
+    fuzz fuzzIntDictList "isEmpty" <|
+        \subject ->
+            subject
+                |> DictList.isEmpty
+                |> Expect.equal (DictList.toDict subject |> Dict.isEmpty)
+
+
 tests : Test
 tests =
     describe "DictList tests"
@@ -803,4 +840,8 @@ tests =
         , getAtTest
         , insertAfterTest
         , insertBeforeTest
+        , getTest
+        , memberTest
+        , sizeTest
+        , isEmptyTest
         ]
