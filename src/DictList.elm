@@ -61,6 +61,11 @@ module DictList
           -- Conversion
         , toDict
         , fromDict
+          -- list-extra
+        , last
+        , isPrefixOf
+        , isSuffixOf
+        , isInfixOf
         )
 
 {-| Have you ever wanted a `Dict`, but you need to maintain an arbitrary
@@ -115,9 +120,13 @@ between an association list and a `DictList` via `toList` and `fromList`.
 # JSON
 
 @docs decodeObject, decodeArray, decodeWithKeys, decodeKeysAndValues
+
+# ListExtra
+
+@docs last, isPrefixOf, isSuffixOf, isInfixOf
 -}
 
-import Dict exposing (Dict)
+import Dict exposing (Dict, keys)
 import DictList.Compat exposing (customDecoder, decodeAndThen, first, maybeAndThen, second)
 import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
 import List.Extra
@@ -535,6 +544,11 @@ getAt index (DictList dict list) =
                     |> Maybe.map (\value -> ( key, value ))
             )
 
+{-| Alias for getAt, but with the parameters flipped.
+-}
+(!!) : DictList comparable value -> Int -> Maybe ( comparable, value)
+(!!) =
+    flip getAt
 
 {-| Insert a key-value pair into a `DictList`, replacing an existing value if
 the keys collide. The first parameter represents an existing key, while the
@@ -935,6 +949,464 @@ order that the `Dict` provides.
 fromDict : Dict comparable v -> DictList comparable v
 fromDict dict =
     DictList dict (Dict.keys dict)
+
+
+
+-- LIST EXTRA
+
+
+{-| Extract the last element of a list.
+    last (fromList [(1, 1), (2, 2), (3, 3)]) == Just (3, 3)
+    last (fromList []) == Nothing
+-}
+last : DictList comparable v -> Maybe ( comparable, v )
+last xs =
+  toList xs
+  |> List.extra.last
+
+
+{-| Return all initial segments of a list, from shortest to longest, empty list first, the list itself last.
+
+    inits [1,2,3] == [[],[1],[1,2],[1,2,3]]
+-}
+inits : DictList comparable v -> List (DictList comparable v)
+-- @FIXME
+inits list = []
+    --foldr (\e acc -> [] :: map ((::) e) acc) [ empty ]
+
+{-| Returns a list of repeated applications of `f`.
+
+If `f` returns `Nothing` the iteration will stop. If it returns `Just y` then `y` will be added to the list and the iteration will continue with `f y`.
+    nextYear : Int -> Maybe Int
+    nextYear year =
+      if year >= 2030 then
+        Nothing
+      else
+        Just (year + 1)
+    -- Will evaluate to [2010, 2011, ..., 2030]
+    iterate nextYear 2010
+-}
+iterate : ((comparable, v) -> Maybe (comparable, v)) -> (comparable, v) -> DictList comparable v
+iterate f x =
+  List.Extra.iterate f v
+  |> fromList
+
+{-| Decompose a list into its head and tail. If the list is empty, return `Nothing`. Otherwise, return `Just (x, xs)`, where `x` is head and `xs` is tail.
+
+    uncons [1,2,3] == Just (1, [2,3])
+    uncons [] = Nothing
+-}
+uncons : DictList comparable v -> Maybe ( (comparable, v), DictList comparable v)
+uncons xs =
+  let
+    xsList = (toList xs)
+    unconsResult = uncons xsList
+  in
+    Maybe.map (\(a, la) -> (a, fromList la) 
+
+{-| Find the first maximum element in a list using a comparable transformation
+-}
+maximumBy : (a -> comparable) -> DictList comparable a -> Maybe a
+maximumBy f ls =
+  List.Extra.maximumBy f (toList ls)
+
+{-| Find the first minimum element in a list using a comparable transformation
+-}
+minimumBy : (a -> comparable) -> DictList comparable a -> Maybe a
+minimumBy f ls =
+  List.Extra.minimumBy f (toList ls)
+
+{-| Take elements in order as long as the predicate evaluates to `True`
+-}
+takeWhile : ((comparable, a) -> Bool) -> DictList comparable a -> DictList comparable a
+takeWhile predicate xs =
+  toList xs
+    |> takeWhile predicate
+    |> fromList
+
+{-| Drop elements in order as long as the predicate evaluates to `True`
+-}
+dropWhile : ((comparable, a) Bool) -> DictList comparable a -> DictList comparable a
+dropWhile predicate list =
+  toList xs
+    |> dropWhile predicate
+    |> fromList
+
+{-| Remove duplicate values, keeping the first instance of each element which appears more than once.
+
+    unique [0,1,1,0,1] == [0,1]
+-}
+unique : DictList comparable comparable -> DictList comparable comparabl
+unique list =
+  toList list
+    |> List.Extra.unique
+    |> fromList
+
+{-| Drop duplicates where what is considered to be a duplicate is the result of first applying the supplied function to the elements of the list.
+-}
+uniqueBy : (a -> comparable) -> List a -> List a
+uniqueBy f list = []
+   -- uniqueHelp f Set.empty list
+
+{-| Indicate if list has duplicate values.
+
+    allDifferent [0,1,1,0,1] == False
+-}
+allDifferent : List comparable -> Bool
+allDifferent list = False
+  --  allDifferentBy identity list
+
+{-| Indicate if list has duplicate values when supplied function are applyed on each values.
+-}
+allDifferentBy : (a -> comparable) -> List a -> Bool
+allDifferentBy f list = False
+   -- List.length list == List.length (uniqueBy f list)
+
+uniqueHelp : (a -> comparable) -> Set comparable -> List a -> List a
+uniqueHelp f existing remaining = []
+--    case remaining of
+--        [] ->
+--            []
+--
+--        first :: rest ->
+--            let
+--                computedFirst =
+--                    f first
+--            in
+--                if Set.member computedFirst existing then
+--                    uniqueHelp f existing rest
+--                else
+--                    first :: uniqueHelp f (Set.insert computedFirst existing) rest
+
+{-| Map functions taking multiple arguments over multiple lists. Each list should be of the same length.
+
+    ((\a b c -> a + b * c)
+        |> flip map [1,2,3]
+        |> andMap [4,5,6]
+        |> andMap [2,1,1]
+    ) == [9,7,9]
+-}
+andMap : DictList comparable a -> DictList comparable (a -> b) -> DictList comparable b
+andMap l fl =
+  let
+    lList = toList l
+    flList = toList fl
+  in
+    toList (List.Extra.andMap lList flList)
+
+{-| Equivalent to `concatMap`. For example, suppose you want to have a cartesian product of [1,2] and [3,4]:
+
+    [1,2] |> andThen (\x -> [3,4]
+          |> andThen (\y -> [(x,y)]))
+
+will give back the list:
+
+    [(1,3),(1,4),(2,3),(2,4)]
+
+Now suppose we want to have a cartesian product between the first list and the second list and its doubles:
+
+    [1,2] |> andThen (\x -> [3,4]
+          |> andThen (\y -> [y,y*2]
+          |> andThen (\z -> [(x,z)])))
+
+will give back the list:
+
+    [(1,3),(1,6),(1,4),(1,8),(2,3),(2,6),(2,4),(2,8)]
+
+Advanced functional programmers will recognize this as the implementation of bind operator (>>=) for lists from the `Monad` typeclass.
+-}
+andThen : (a -> DictList comparable b) -> DictList comparable a -> DictList comparable b
+andThen =
+    concatMap
+
+{-| Negation of `member`.
+
+    notMember 1 [1,2,3] == False
+    notMember 4 [1,2,3] == True
+-}
+notMember : a -> DictList comparable a -> Bool
+notMember x (DictList dict list) =
+  List.Extra.notMember a list
+
+{-| Find the first element that satisfies a predicate and return
+Just that element. If none match, return Nothing.
+
+    find (\num -> num > 5) [2, 4, 6, 8] == Just 6
+-}
+find : (a -> Bool) -> DictList comparable a -> Maybe a
+find predicate (DictList dict list) =
+  List.extra.find predicate list
+
+{-| Return the index of the first occurrence of the element. Otherwise, return `Nothing`. Indexing starts from 0.
+
+    elemIndex 1 [1,2,3] == Just 0
+    elemIndex 4 [1,2,3] == Nothing
+    elemIndex 1 [1,2,1] == Just 0
+-}
+elemIndex : a -> DictList comparable a -> Maybe Int
+elemIndex x (DictList dict list) =
+  -- @TODO: Shouldn't this return the dict key?
+  List.Extra.elemIndex x list
+
+{-| Return all indices of occurrences of the element. If element is not found, return empty list. Indexing starts from 0.
+
+    elemIndices 1 [1,2,3] == [0]
+    elemIndices 4 [1,2,3] == []
+    elemIndices 1 [1,2,1] == [0,2]
+-}
+elemIndices : a -> List a -> List Int
+elemIndices x (DictList dict list) =
+  List.Extra.elemIndices x list
+
+{-| Take a predicate and a list, return the index of the first element that satisfies the predicate. Otherwise, return `Nothing`. Indexing starts from 0.
+
+    findIndex isEven [1,2,3] == Just 1
+    findIndex isEven [1,3,5] == Nothing
+    findIndex isEven [1,2,4] == Just 1
+-}
+findIndex : (a -> Bool) -> DictList comparable a -> Maybe Int
+findIndex p (DictList dict list) =
+  List.Extra.findIndex p list
+
+{-| Take a predicate and a list, return indices of all elements satisfying the predicate. Otherwise, return empty list. Indexing starts from 0.
+
+    findIndices isEven [1,2,3] == [1]
+    findIndices isEven [1,3,5] == []
+    findIndices isEven [1,2,4] == [1,2]
+-}
+findIndices : (a -> Bool) -> DictList comparable a -> List Int
+findIndices p (DictList dict list) =
+  List.Extra.findIndices p list
+
+{-| Replace all values that satisfy a predicate with a replacement value.
+-}
+replaceIf : (a -> Bool) -> a -> DictList comparable a -> DictList comparable a
+replaceIf predicate replacement (DictList dict list) =
+  List.Extra.replaceIf p replacement list
+    |> fromList
+
+
+{-| Return all final segments of a list, from longest to shortest, the list itself first, empty list last.
+
+    tails [1,2,3] == [[1,2,3],[2,3],[3],[]]
+-}
+tails : DictList comparable v -> List (DictList comparable v)
+tails list = []
+    --foldr tailsHelp [ [] ]
+
+--tailsHelp : (comparable, v) -> List (DictList comparable v) -> List (DictList comparable v)
+--tailsHelp (DictList k v) list = []
+    --case list of
+    --    x :: xs ->
+    --        (cons comparable v x) :: x :: xs
+
+    --    [] ->
+    --        []
+
+{-| Return all combinations in the form of (element, rest of the list). Read [Haskell Libraries proposal](https://mail.haskell.org/pipermail/libraries/2008-February/009270.html) for further ideas on how to use this function.
+
+    select [1,2,3,4] == [(1,[2,3,4]),(2,[1,3,4]),(3,[1,2,4]),(4,[1,2,3])]
+-}
+select : DictList comparable v -> List ((comparable, v), DictList comparable v)
+select dictList = []
+--  let
+--    list = toList dictList
+--  in
+--    case list of
+--        [] ->
+--            []
+--
+--        x :: xs ->
+--            ( x, fromList xs ) :: map (\( y, ys ) -> ( y, fromList (x :: (toList ys)) )) (select (fromList xs))
+
+{-| Return all combinations in the form of (elements before, element, elements after).
+    selectSplit [1,2,3] == [([],1,[2,3]),([1],2,[3]),([1,2],3,[])]
+-}
+selectSplit : List a -> List ( List a, a, List a )
+selectSplit xs = []
+--    case xs of
+--        [] ->
+--            []
+--
+--        x :: xs ->
+--            ( [], x, xs ) :: map (\( lys, y, rys ) -> ( x :: lys, y, rys )) (selectSplit xs)
+--
+
+{-| Take 2 lists and return True, if the first list is the prefix of the second list.
+-}
+isPrefixOf : DictList comparable v -> DictList comparable v -> Bool
+isPrefixOf prefix xs =
+  let
+    prefixList = toList prefix
+    xsList = toList xs
+  in
+    List.Extra.isPrefixOf prefixList xsList
+
+{-| Take 2 lists and return True, if the first list is the suffix of the second list.
+-}
+isSuffixOf : DictList comparable v -> DictList comparable v -> Bool
+isSuffixOf suffix xs =
+  let
+    suffixList = toList suffix
+    xsList = toList xs
+  in
+    List.Extra.isSuffixOf suffixList xsList
+
+{-| Take 2 lists and return True, if the first list is an infix of the second list.
+-}
+isInfixOf : DictList comparable v -> DictList comparable v -> Bool
+isInfixOf infix xs =
+  let
+    infixList = toList infix
+    xsList = toList xs
+  in
+    List.Extra.isInfixOf infixList xsList
+
+{-| Take 2 lists and return True, if the first list is a subsequence of the second list.
+-}
+isSubsequenceOf : DictList comparable v -> DictList comparable v -> Bool
+isSubsequenceOf subseq xs = False
+--    member subseq (subsequences xs)
+
+{-| Take two lists and returns a list of corresponding pairs
+-}
+zip : DictList comparable a -> DictList comparable b -> List ((comparable, a), (comparable, b))
+zip xs bs =
+  List.Extra.zip (toList xs) (toList bs)
+
+{-| Take three lists and returns a list of triples
+-}
+zip3 : DictList comparable a -> DictList comparable b -> DictList comparable c -> List ((comparable, a), (comparable, b), (comparable, c))
+zip3 xs bs cs =
+  List.Extra.zip3 (toList xs) (toList bs) (toList cs)
+
+{-| Take four lists and returns a list of quadruples
+-}
+zip4 : DictList comparable a -> DictList comparable b -> DictList comparable c -> DictList comparable d -> List ((comparable, a), (comparable, b), (comparable, c), (comparable, d))
+zip4 xs bs cs ds =
+  List.Extra.zip4 (toList xs) (toList bs) (toList cs) (toList ds)
+
+{-| Take five lists and returns a list of quintuples
+-}
+zip5 : DictList comparable a -> DictList comparable b -> DictList comparable c -> DictList comparable d -> DictList comparable e -> List ((comparable, a), (comparable, b), (comparable, c), (comparable, d), (comparable, e))
+zip5 xs bs cs ds es =
+  List.Extra.zip5 (toList xs) (toList bs) (toList cs) (toList ds) (toList es)
+
+{-| Map functions taking multiple arguments over multiple lists, regardless of list length.
+  All possible combinations will be explored.
+
+  lift2 (+) [1,2,3] [4,5] == [5,6,6,7,7,8]
+-}
+lift2 : (a -> b -> c) -> List a -> List b -> List c
+lift2 f la lb = []
+    -- la |> andThen (\a -> lb |> andThen (\b -> [ f a b ]))
+
+{-|
+-}
+lift3 : (a -> b -> c -> d) -> List a -> List b -> List c -> List d
+lift3 f la lb lc = []
+    --la |> andThen (\a -> lb |> andThen (\b -> lc |> andThen (\c -> [ f a b c ])))
+
+
+{-|
+-}
+lift4 : (a -> b -> c -> d -> e) -> List a -> List b -> List c -> List d -> List e
+lift4 f la lb lc ld = []
+    --la |> andThen (\a -> lb |> andThen (\b -> lc |> andThen (\c -> ld |> andThen (\d -> [ f a b c d ]))))
+
+{-| Split list into groups of size given by the first argument.
+
+    groupsOf 3 (range 1 10) == [[1,2,3],[4,5,6],[7,8,9]]
+-}
+groupsOf : Int -> List a -> List (List a)
+groupsOf size xs = []
+    -- groupsOfWithStep size size xs
+
+{-| Split list into groups of size given by the first argument.  After each group, drop a number of elements given by the second argument before starting the next group.
+
+    groupsOfWithStep 2 1 (range 1 4) == [[1,2],[2,3],[3,4]]
+-}
+groupsOfWithStep : Int -> Int -> List a -> List (List a)
+groupsOfWithStep size step xs = []
+--    let
+--        group =
+--            List.take size xs
+--
+--        xs_ =
+--            List.drop step xs
+--
+--        okayArgs =
+--            size > 0 && step > 0
+--
+--        okayLength =
+--            size == List.length group
+--    in
+--        if okayArgs && okayLength then
+--            group :: groupsOfWithStep size step xs_
+--        else
+--            []
+
+{-| `groupsOfVarying ns` takes `n` elements from a list for each `n` in `ns`, splitting the list into variably sized segments
+
+    groupsOfVarying [2, 3, 1] ["a", "b", "c", "d", "e", "f"] == [["a", "b"], ["c", "d", "e"], ["f"]]
+    groupsOfVarying [2] ["a", "b", "c", "d", "e", "f"] == [["a", "b"]]
+    groupsOfVarying [2, 3, 1, 5, 6] ["a", "b", "c", "d", "e"] == [["a", "b"], ["c", "d", "e"]]
+-}
+groupsOfVarying : List Int -> List a -> List (List a)
+groupsOfVarying listOflengths list = []
+    -- groupsOfVarying_ listOflengths list []
+
+groupsOfVarying_ : List Int -> List a -> List (List a) -> List (List a)
+groupsOfVarying_ listOflengths list accu =
+    case ( listOflengths, list ) of
+        ( length :: tailLengths, _ :: _ ) ->
+            let
+                ( head, tail ) =
+                    splitAt length list
+            in
+                groupsOfVarying_ tailLengths tail (head :: accu)
+
+        _ ->
+            List.reverse accu
+
+{-| Split list into groups of size given by the first argument "greedily" (don't throw the group away if not long enough).
+
+    greedyGroupsOf 3 (range 1 10) == [[1,2,3],[4,5,6],[7,8,9],[10]]
+-}
+greedyGroupsOf : Int -> List a -> List (List a)
+greedyGroupsOf size xs =
+    greedyGroupsOfWithStep size size xs
+
+{-| Split list into groups of size given by the first argument "greedily" (don't throw the group away if not long enough). After each group, drop a number of elements given by the second argumet before starting the next group.
+
+    greedyGroupsOfWithStep 3 2 (range 1 6) == [[1,2,3],[3,4,5],[5,6]]
+-}
+greedyGroupsOfWithStep : Int -> Int -> List a -> List (List a)
+greedyGroupsOfWithStep size step xs =
+    let
+        group =
+            List.take size xs
+
+        xs_ =
+            List.drop step xs
+
+        okayArgs =
+            size > 0 && step > 0
+
+        okayXs =
+            List.length xs > 0
+    in
+        if okayArgs && okayXs then
+            group :: greedyGroupsOfWithStep size step xs_
+        else
+            []
+
+
+
+
+
+
+
 
 
 
