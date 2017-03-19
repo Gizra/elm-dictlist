@@ -8,6 +8,7 @@ import Test exposing (..)
 import Expect exposing (Expectation)
 import Maybe exposing (Maybe(Nothing, Just))
 import DictList exposing (..)
+import List.Extra
 
 
 tests : Test
@@ -59,4 +60,23 @@ testListOfN n =
                         Expect.equal (Nothing) (last xs)
                     else
                         Expect.equal (Just ( n, n )) (last xs)
+            , test "inits" <|
+               \() ->
+                  if n == 0 then
+                    Expect.equal [empty] (inits empty)
+                  else
+                    Expect.equal [empty, fromList [(1,1)], fromList [(1,1), (2,2)]] (inits (fromList [(1,1), (2,2)]))
+           , test "(!!)" <|
+              \() ->
+                if n == 0 then
+                  Expect.equal Nothing ((!!) empty 0)
+                else
+                  Expect.equal (Just (n, n)) ((!!) xs (n-1))
+            , test "uncons" <|
+               \() ->
+                 if n == 0 then
+                  Expect.equal Nothing (uncons empty)
+                else
+                  -- @TODO Generalize
+                  Expect.equal (Just ((1, 1), fromList [(2, 2), (3, 3)])) (uncons (fromList [(1, 1), (2, 2), (3, 3)]))
             ]
