@@ -22,7 +22,7 @@ tests =
 
 toDictList : List comparable -> DictList comparable comparable
 toDictList =
-    List.map (\a -> (a, a)) >> DictList.fromList
+    List.map (\a -> ( a, a )) >> DictList.fromList
 
 
 testListOfN : Int -> Test
@@ -40,7 +40,7 @@ testListOfN n =
         -- assume foldl and (::) work
         zs =
             List.range 0 n
-                |> List.map (\a -> (a, a))
+                |> List.map (\a -> ( a, a ))
                 |> DictList.fromList
 
         sumSeq k =
@@ -77,7 +77,7 @@ testListOfN n =
                     if n == 0 then
                         Expect.equal (Nothing) (head xs)
                     else
-                        Expect.equal (Just (1, 1)) (head xs)
+                        Expect.equal (Just ( 1, 1 )) (head xs)
             , describe "List.filter"
                 [ test "none" <| \() -> Expect.equal (empty) (DictList.filter (\_ x -> x > n) xs)
                 , test "one" <| \() -> Expect.equal [ n ] (values <| DictList.filter (\_ z -> z == n) zs)
@@ -95,8 +95,8 @@ testListOfN n =
                 , test "all" <| \() -> Expect.equal (empty) (drop n xs)
                 , test "all+" <| \() -> Expect.equal (empty) (drop (n + 1) xs)
                 ]
-            -- append works differently in `DictList` because it overwrites things with the same keys
-            , test "append" <| \() -> Expect.equal (xsSum {- * 2-}) (append xs xs |> foldl (always (+)) 0)
+              -- append works differently in `DictList` because it overwrites things with the same keys
+            , test "append" <| \() -> Expect.equal (xsSum {- * 2 -}) (append xs xs |> foldl (always (+)) 0)
             , test "cons" <| \() -> Expect.equal (values <| append (toDictList [ -1 ]) xs) (values <| cons -1 -1 xs)
             , test "List.concat" <| \() -> Expect.equal (append xs (append zs xs)) (DictList.concat [ xs, zs, xs ])
             , describe "partition"
