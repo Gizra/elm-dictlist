@@ -61,6 +61,21 @@ module DictList
           -- Conversion
         , toDict
         , fromDict
+          -- list-extra
+        , last
+        , inits
+        , (!!)
+        , uncons
+        , maximumBy
+        , minimumBy
+        , andMap
+        , andThen
+        , takeWhile
+        , dropWhile
+        , unique
+        , uniqueBy
+        , allDifferent
+        , allDifferentBy
         )
 
 {-| Have you ever wanted a `Dict`, but you need to maintain an arbitrary
@@ -115,12 +130,19 @@ between an association list and a `DictList` via `toList` and `fromList`.
 # JSON
 
 @docs decodeObject, decodeArray, decodeWithKeys, decodeKeysAndValues
+
+# ListExtra
+
+@docs last, inits, (!!), uncons, maximumBy, minimumBy, andMap, andThen, takeWhile, dropWhile, unique, uniqueBy, allDifferent, allDifferentBy
+
 -}
 
-import Dict exposing (Dict)
+
+import Dict exposing (Dict, keys)
 import DictList.Compat exposing (customDecoder, decodeAndThen, first, maybeAndThen, second)
 import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
 import List.Extra
+import Set
 
 
 {-| A `Dict` that maintains an arbitrary ordering of keys (rather than sorting
@@ -535,6 +557,11 @@ getAt index (DictList dict list) =
                     |> Maybe.map (\value -> ( key, value ))
             )
 
+{-| Alias for getAt, but with the parameters flipped.
+-}
+(!!) : DictList comparable value -> Int -> Maybe ( comparable, value)
+(!!) =
+    flip getAt
 
 {-| Insert a key-value pair into a `DictList`, replacing an existing value if
 the keys collide. The first parameter represents an existing key, while the
@@ -937,6 +964,174 @@ fromDict dict =
     DictList dict (Dict.keys dict)
 
 
+
+-- LIST EXTRA
+
+
+{-| Extract the last element of a list.
+    last (fromList [(1, 1), (2, 2), (3, 3)]) == Just (3, 3)
+    last (fromList []) == Nothing
+-}
+last : DictList comparable v -> Maybe ( comparable, v )
+last xs =
+  toList xs
+  |> List.Extra.last
+
+
+{-| Return all initial segments of a list, from shortest to longest, empty list first, the list itself last.
+
+    inits (fromList [(1, 1),(2,),(3, 3)]) == [fromList [], fromList [(1, 1)], fromList [(1, 1), (2, 2)], fromList [(1, 1), (2, 2), (3, 3)]]
+-}
+inits : DictList comparable v -> List (DictList comparable v)
+-- @FIXME
+inits list =
+  toList list
+    |> List.Extra.inits
+    |> List.map fromList
+
+{-| Returns a list of repeated applications of `f`.
+
+If `f` returns `Nothing` the iteration will stop. If it returns `Just y` then `y` will be added to the list and the iteration will continue with `f y`.
+    nextYear : Int -> Maybe Int
+    nextYear year =
+      if year >= 2030 then
+        Nothing
+      else
+        Just (year + 1)
+    -- Will evaluate to [2010, 2011, ..., 2030]
+    iterate nextYear 2010
+-}
+iterate : ((comparable, v) -> Maybe (comparable, v)) -> (comparable, v) -> DictList comparable v
+iterate f x =
+  List.Extra.iterate f x
+  |> fromList
+
+{-| Decompose a list into its head and tail. If the list is empty, return `Nothing`. Otherwise, return `Just (x, xs)`, where `x` is head and `xs` is tail.
+
+    uncons (fromList [(1, 1),(2, 2),(3, 3)] == Just ((1, 1), fromList [(2, 2), (3, 3)])
+    uncons empty = Nothing
+-}
+uncons : DictList comparable v -> Maybe ( (comparable, v), DictList comparable v)
+uncons xs =
+  toList xs
+    |> List.Extra.uncons
+    |> Maybe.map (\(a, la) -> (a, fromList la))
+
+{-| Find the first maximum element in a list using a comparable transformation
+-}
+maximumBy : (comparable2 -> a -> comparable1) -> DictList comparable2 a -> Maybe (comparable2, a)
+maximumBy f ls =
+  toList ls
+    |> List.Extra.maximumBy (uncurry f)
+
+{-| Find the first minimum element in a list using a comparable transformation
+-}
+minimumBy : (comparable2 -> a -> comparable1) -> DictList comparable2 a -> Maybe (comparable2, a)
+minimumBy f ls =
+  toList ls
+    |> List.Extra.minimumBy (uncurry f)
+
+{-| Take elements in order as long as the predicate evaluates to `True`
+-}
+takeWhile : ((comparable, a) -> Bool) -> DictList comparable a -> DictList comparable a
+takeWhile predicate xs =
+  toList xs
+    |> List.Extra.takeWhile predicate
+    |> fromList
+
+{-| Drop elements in order as long as the predicate evaluates to `True`
+-}
+dropWhile : ((comparable, a) -> Bool) -> DictList comparable a -> DictList comparable a
+dropWhile predicate list =
+  toList list
+    |> List.Extra.dropWhile predicate
+    |> fromList
+
+{-| Remove duplicate values, keeping the first instance of each element which appears more than once.
+
+    unique [0,1,1,0,1] == [0,1]
+-}
+unique : DictList comparable1 comparable2 -> DictList comparable1 comparable2
+unique list =
+  toList list
+    |> List.Extra.unique
+    |> fromList
+
+{-| Drop duplicates where what is considered to be a duplicate is the result of first applying the supplied function to the elements of the list.
+-}
+uniqueBy : (comparable1 -> a -> comparable2) -> DictList comparable1 a -> DictList comparable1 a
+uniqueBy f list =
+  toList list
+    |> List.Extra.uniqueBy (uncurry f)
+    |> fromList
+
+{-| Indicate if list has duplicate values.
+
+    allDifferent [0,1,1,0,1] == False
+-}
+allDifferent : DictList comparable1 comparable2 -> Bool
+allDifferent list =
+  -- @TODO Should this method just use the values, or also the keys
+  values list
+   |> List.Extra.allDifferent 
+
+{-| Indicate if list has duplicate values when supplied function are applyed on each values.
+-}
+allDifferentBy : (comparable1 -> a -> comparable2) -> DictList comparable1 a -> Bool
+allDifferentBy f list = 
+  toList list
+    |> List.Extra.allDifferentBy (uncurry f)
+
+{-| Map functions taking multiple arguments over multiple lists. Each list should be of the same length.
+
+    ((\a b c -> a + b * c)
+        |> flip map [1,2,3]
+        |> andMap [4,5,6]
+        |> andMap [2,1,1]
+    ) == [9,7,9]
+-}
+andMap : DictList comparable a -> DictList comparable (a -> b) -> DictList comparable b
+andMap l fl =
+  let
+    keyList = keys l
+    lList = values l
+    flList = values fl
+  in
+      List.Extra.andMap lList flList
+      |> List.Extra.zip keyList
+      |> fromList
+
+{-| Equivalent to `concatMap`. For example, suppose you want to have a cartesian product of [1,2] and [3,4]:
+
+    [1,2] |> andThen (\x -> [3,4]
+          |> andThen (\y -> [(x,y)]))
+
+will give back the list:
+
+    [(1,3),(1,4),(2,3),(2,4)]
+
+Now suppose we want to have a cartesian product between the first list and the second list and its doubles:
+
+    [1,2] |> andThen (\x -> [3,4]
+          |> andThen (\y -> [y,y*2]
+          |> andThen (\z -> [(x,z)])))
+
+will give back the list:
+
+    [(1,3),(1,6),(1,4),(1,8),(2,3),(2,6),(2,4),(2,8)]
+
+Advanced functional programmers will recognize this as the implementation of bind operator (>>=) for lists from the `Monad` typeclass.
+-}
+andThen : (comparable -> a -> DictList comparable b) -> DictList comparable a -> DictList comparable b
+andThen =
+    concatMap
+
+concatMap : (comparable -> a -> DictList comparable b) -> DictList comparable a -> DictList comparable b
+concatMap f xs = empty
+--  map f xs
+--    |> toList
+--    |> values
+--    |> concat
 
 -----------
 -- Internal

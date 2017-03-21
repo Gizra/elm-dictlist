@@ -4,6 +4,7 @@ import DictTests
 import DictListTests
 import Json.Encode exposing (Value)
 import ListTests
+import ListExtraTests
 import Test exposing (..)
 import Test.Runner.Node exposing (run)
 
@@ -21,4 +22,5 @@ all =
         [ DictListTests.tests
         , DictTests.tests
         , ListTests.tests
+        , ListExtraTests.tests
         ]
