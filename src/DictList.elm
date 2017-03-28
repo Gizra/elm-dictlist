@@ -130,7 +130,7 @@ import Dict exposing (Dict)
 import DictList.Compat exposing (customDecoder, decodeAndThen, first, maybeAndThen, second)
 import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
 import List.Extra
-import Set
+import Set exposing (Set)
 
 
 {-| A `Dict` that maintains an arbitrary ordering of keys (rather than sorting
@@ -990,14 +990,14 @@ removeWhen pred dict =
 
 {-| Remove a key-value pair if its key appears in the set.
 -}
-removeMany : Set.Set comparable -> DictList comparable v -> DictList comparable v
+removeMany : Set comparable -> DictList comparable v -> DictList comparable v
 removeMany set dict =
     Set.foldl (\k acc -> remove k acc) dict set
 
 
 {-| Keep a key-value pair if its key appears in the set.
 -}
-keepOnly : Set.Set comparable -> DictList comparable v -> DictList comparable v
+keepOnly : Set comparable -> DictList comparable v -> DictList comparable v
 keepOnly set dict =
     Set.foldl
         (\k acc ->
