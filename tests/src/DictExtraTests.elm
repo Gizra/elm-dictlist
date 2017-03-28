@@ -37,13 +37,13 @@ dictExtraUnitTests =
     describe "Dict Extra Unittests"
         [ describe "groupBy"
             [ test "empty" <| \() -> Expect.equal (groupBy identity []) empty
-            , test "always equal elements" <| \() -> Expect.equal (groupBy (always 1) [1, 2, 3]) (fromList [ ( 1, [ 1, 2, 3 ] ) ])
-            , test "map to original key" <| \() -> Expect.equal (groupBy identity [1, 2, 3]) (fromList [ ( 3, [ 3 ] ), ( 2, [ 2 ] ), ( 1, [ 1 ] ) ])
-            , test "odd-even" <| \() -> Expect.equal (groupBy (\v -> v % 2) [1, 2, 3]) (fromList [ ( 1, [ 1, 3 ] ), ( 0, [ 2 ] ) ])
+            , test "always equal elements" <| \() -> Expect.equal (groupBy (always 1) [ 1, 2, 3 ]) (fromList [ ( 1, [ 1, 2, 3 ] ) ])
+            , test "map to original key" <| \() -> Expect.equal (groupBy identity [ 1, 2, 3 ]) (fromList [ ( 3, [ 3 ] ), ( 2, [ 2 ] ), ( 1, [ 1 ] ) ])
+            , test "odd-even" <| \() -> Expect.equal (groupBy (\v -> v % 2) [ 1, 2, 3 ]) (fromList [ ( 1, [ 1, 3 ] ), ( 0, [ 2 ] ) ])
             ]
         , describe "fromListBy"
             [ test "empty" <| \() -> Expect.equal (fromListBy identity []) empty
-            , test "simple list" <| \() -> Expect.equal (fromListBy (\v ->v + 1) [1, 2, 3]) (fromList [ ( 2, 1 ), ( 3, 2 ), ( 4, 3 ) ])
+            , test "simple list" <| \() -> Expect.equal (fromListBy (\v -> v + 1) [ 1, 2, 3 ]) (fromList [ ( 2, 1 ), ( 3, 2 ), ( 4, 3 ) ])
             ]
         , describe "removeWhen"
             [ test "empty" <| \() -> Expect.equal (removeWhen (\k v -> True) empty) empty

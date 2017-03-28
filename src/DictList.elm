@@ -972,7 +972,7 @@ This can, for instance, be useful when constructing Dicts from a List of records
     jill = {id=1, name="Jill"}
     fromListBy .id [mary, jack, jill] == DictList.fromList [(1, jack), (2, jill)]
 -}
-fromListBy : ( a -> comparable) -> List a -> DictList comparable a
+fromListBy : (a -> comparable) -> List a -> DictList comparable a
 fromListBy keyfn xs =
     List.foldl
         (\x acc -> insert (keyfn x) x acc)
