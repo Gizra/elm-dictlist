@@ -954,11 +954,11 @@ Creates a `Dict` which maps the key to a list of matching elements.
     jill = {id=1, name="Jill"}
     groupBy .id [mary, jack, jill] == DictList.fromList [(1, [mary, jill]), (2, [jack])]
 -}
-groupBy : (comparable1 -> a -> comparable2) -> DictList comparable1 a -> DictList comparable2 (List a)
+groupBy : (a -> comparable) -> List a -> DictList comparable (List a)
 groupBy keyfn list =
-    foldr
-        (\key x acc ->
-            update (keyfn key x) (Maybe.map ((::) x) >> Maybe.withDefault [ x ] >> Just) acc
+    List.foldr
+        (\x acc ->
+            update (keyfn x) (Maybe.map ((::) x) >> Maybe.withDefault [ x ] >> Just) acc
         )
         empty
         list
@@ -972,10 +972,10 @@ This can, for instance, be useful when constructing Dicts from a List of records
     jill = {id=1, name="Jill"}
     fromListBy .id [mary, jack, jill] == DictList.fromList [(1, jack), (2, jill)]
 -}
-fromListBy : (comparable1 -> a -> comparable2) -> DictList comparable1 a -> DictList comparable2 a
+fromListBy : ( a -> comparable) -> List a -> DictList comparable a
 fromListBy keyfn xs =
-    foldl
-        (\key x acc -> insert (keyfn key x) x acc)
+    List.foldl
+        (\x acc -> insert (keyfn x) x acc)
         empty
         xs
 

@@ -16,9 +16,9 @@ fuzzDictList fuzzKey fuzzValue =
         |> Fuzz.map DictList.fromList
 
 
-fuzzIntDictList : Fuzzer (DictList Int Int)
-fuzzIntDictList =
-    fuzzDictList Fuzz.int Fuzz.int
+fuzzIntList : Fuzzer (List Int)
+fuzzIntList =
+    Fuzz.list Fuzz.int
 
 
 threeElementList =
@@ -36,14 +36,14 @@ dictExtraUnitTests : Test
 dictExtraUnitTests =
     describe "Dict Extra Unittests"
         [ describe "groupBy"
-            [ test "empty" <| \() -> Expect.equal (groupBy (\k v -> k) empty) empty
-            , test "always equal elements" <| \() -> Expect.equal (groupBy (\k v -> 1) (fromList [ ( 1, 1 ), ( 2, 2 ), ( 3, 3 ) ])) (fromList [ ( 1, [ 1, 2, 3 ] ) ])
-            , test "map to original key" <| \() -> Expect.equal (groupBy (\k v -> k) (fromList [ ( 1, 1 ), ( 2, 2 ), ( 3, 3 ) ])) (fromList [ ( 3, [ 3 ] ), ( 2, [ 2 ] ), ( 1, [ 1 ] ) ])
-            , test "odd-even" <| \() -> Expect.equal (groupBy (\k v -> k % 2) (fromList [ ( 1, 1 ), ( 2, 2 ), ( 3, 3 ) ])) (fromList [ ( 1, [ 1, 3 ] ), ( 0, [ 2 ] ) ])
+            [ test "empty" <| \() -> Expect.equal (groupBy identity []) empty
+            , test "always equal elements" <| \() -> Expect.equal (groupBy (always 1) [1, 2, 3]) (fromList [ ( 1, [ 1, 2, 3 ] ) ])
+            , test "map to original key" <| \() -> Expect.equal (groupBy identity [1, 2, 3]) (fromList [ ( 3, [ 3 ] ), ( 2, [ 2 ] ), ( 1, [ 1 ] ) ])
+            , test "odd-even" <| \() -> Expect.equal (groupBy (\v -> v % 2) [1, 2, 3]) (fromList [ ( 1, [ 1, 3 ] ), ( 0, [ 2 ] ) ])
             ]
         , describe "fromListBy"
-            [ test "empty" <| \() -> Expect.equal (fromListBy (\k v -> k) empty) empty
-            , test "simple list" <| \() -> Expect.equal (fromListBy (\k v -> k + 1) (fromList [ ( 1, 1 ), ( 2, 2 ), ( 3, 3 ) ])) (fromList [ ( 2, 1 ), ( 3, 2 ), ( 4, 3 ) ])
+            [ test "empty" <| \() -> Expect.equal (fromListBy identity []) empty
+            , test "simple list" <| \() -> Expect.equal (fromListBy (\v ->v + 1) [1, 2, 3]) (fromList [ ( 2, 1 ), ( 3, 2 ), ( 4, 3 ) ])
             ]
         , describe "removeWhen"
             [ test "empty" <| \() -> Expect.equal (removeWhen (\k v -> True) empty) empty
@@ -75,20 +75,20 @@ dictExtraFuzzTests : Test
 dictExtraFuzzTests =
     -- @TODO Expand the fuzz tests
     describe "Dict extra fuzz tests"
-        [ fuzz fuzzIntDictList "groupBy (total length doesn't change)" <|
+        [ fuzz fuzzIntList "groupBy (total length doesn't change)" <|
             \subject ->
-                Expect.equal (DictList.length subject)
-                    (groupBy (\k v -> k % 2) subject
+                Expect.equal (List.length subject)
+                    (groupBy (\v -> v % 2) subject
                         |> toList
                         |> List.map (\( k, v ) -> List.length v)
                         |> List.foldr (+) 0
                     )
-        , fuzz fuzzIntDictList "groupBy (no elements dissapear)" <|
+        , fuzz fuzzIntList "groupBy (no elements dissapear)" <|
             \subject ->
                 Expect.equal
-                    (Set.diff (Set.fromList (values subject))
+                    (Set.diff (Set.fromList subject)
                         (Set.fromList
-                            (groupBy (\k v -> k % 2) subject
+                            (groupBy (\v -> v % 2) subject
                                 |> toList
                                 |> List.foldr (\( k, v ) agg -> List.append v agg) []
                             )
