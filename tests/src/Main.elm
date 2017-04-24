@@ -2,6 +2,8 @@ port module Main exposing (..)
 
 import DictTests
 import DictListTests
+import DictExtraTests
+import DictExtraPackageTests
 import Json.Encode exposing (Value)
 import ListTests
 import Test exposing (..)
@@ -20,5 +22,7 @@ all =
     describe "All tests"
         [ DictListTests.tests
         , DictTests.tests
+        , DictExtraTests.tests
+        , DictExtraPackageTests.tests
         , ListTests.tests
         ]

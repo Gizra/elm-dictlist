@@ -61,6 +61,13 @@ module DictList
           -- Conversion
         , toDict
         , fromDict
+          -- dict extra
+        , groupBy
+        , fromListBy
+        , removeWhen
+        , removeMany
+        , keepOnly
+        , mapKeys
         )
 
 {-| Have you ever wanted a `Dict`, but you need to maintain an arbitrary
@@ -115,12 +122,15 @@ between an association list and a `DictList` via `toList` and `fromList`.
 # JSON
 
 @docs decodeObject, decodeArray, decodeWithKeys, decodeKeysAndValues
+
+@docs groupBy, fromListBy, removeWhen, removeMany, keepOnly, mapKeys
 -}
 
 import Dict exposing (Dict)
 import DictList.Compat exposing (customDecoder, decodeAndThen, first, maybeAndThen, second)
 import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
 import List.Extra
+import Set exposing (Set)
 
 
 {-| A `Dict` that maintains an arbitrary ordering of keys (rather than sorting
@@ -935,6 +945,77 @@ order that the `Dict` provides.
 fromDict : Dict comparable v -> DictList comparable v
 fromDict dict =
     DictList dict (Dict.keys dict)
+
+
+{-| Takes a key-fn and a list.
+Creates a `Dict` which maps the key to a list of matching elements.
+    mary = {id=1, name="Mary"}
+    jack = {id=2, name="Jack"}
+    jill = {id=1, name="Jill"}
+    groupBy .id [mary, jack, jill] == DictList.fromList [(1, [mary, jill]), (2, [jack])]
+-}
+groupBy : (a -> comparable) -> List a -> DictList comparable (List a)
+groupBy keyfn list =
+    List.foldr
+        (\x acc ->
+            update (keyfn x) (Maybe.map ((::) x) >> Maybe.withDefault [ x ] >> Just) acc
+        )
+        empty
+        list
+
+
+{-| Create a dictionary from a list of values, by passing a function that can get a key from any such value.
+If the function does not return unique keys, earlier values are discarded.
+This can, for instance, be useful when constructing Dicts from a List of records with `id` fields:
+    mary = {id=1, name="Mary"}
+    jack = {id=2, name="Jack"}
+    jill = {id=1, name="Jill"}
+    fromListBy .id [mary, jack, jill] == DictList.fromList [(1, jack), (2, jill)]
+-}
+fromListBy : (a -> comparable) -> List a -> DictList comparable a
+fromListBy keyfn xs =
+    List.foldl
+        (\x acc -> insert (keyfn x) x acc)
+        empty
+        xs
+
+
+{-| Remove elements which satisfies the predicate.
+    removeWhen (\_ v -> v == 1) (DictList.fromList [("Mary", 1), ("Jack", 2), ("Jill", 1)]) == DictList.fromList [("Jack", 2)]
+-}
+removeWhen : (comparable -> v -> Bool) -> DictList comparable v -> DictList comparable v
+removeWhen pred dict =
+    filter (\k v -> not (pred k v)) dict
+
+
+{-| Remove a key-value pair if its key appears in the set.
+-}
+removeMany : Set comparable -> DictList comparable v -> DictList comparable v
+removeMany set dict =
+    Set.foldl (\k acc -> remove k acc) dict set
+
+
+{-| Keep a key-value pair if its key appears in the set.
+-}
+keepOnly : Set comparable -> DictList comparable v -> DictList comparable v
+keepOnly set dict =
+    Set.foldl
+        (\k acc ->
+            Maybe.withDefault acc <| Maybe.map (\v -> insert k v acc) (get k dict)
+        )
+        empty
+        set
+
+
+{-| Apply a function to all keys in a dictionary
+-}
+mapKeys : (comparable1 -> comparable2) -> DictList comparable1 v -> DictList comparable2 v
+mapKeys keyMapper dict =
+    let
+        addKey key value d =
+            insert (keyMapper key) value d
+    in
+        foldl addKey empty dict
 
 
 
