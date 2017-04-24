@@ -61,7 +61,7 @@ module DictList
           -- Conversion
         , toDict
         , fromDict
-          -- dict extra
+          -- Dict.Extra
         , groupBy
         , fromListBy
         , removeWhen
@@ -92,6 +92,7 @@ between an association list and a `DictList` via `toList` and `fromList`.
 # Build
 
 @docs empty, singleton, insert, update, remove
+@docs removeWhen, removeMany, keepOnly
 @docs cons, insertAfter, insertBefore
 
 # Combine
@@ -110,20 +111,19 @@ between an association list and a `DictList` via `toList` and `fromList`.
 
 # Transform
 
-@docs map, foldl, foldr, filter, partition
+@docs map, mapKeys, foldl, foldr, filter, partition
 @docs indexedMap, filterMap, reverse
 @docs sort, sortBy, sortWith
 
 # Convert
 
-@docs keys, values, toList, fromList
+@docs keys, values, toList, fromList, fromListBy, groupBy
 @docs toDict, fromDict
 
 # JSON
 
 @docs decodeObject, decodeArray, decodeWithKeys, decodeKeysAndValues
 
-@docs groupBy, fromListBy, removeWhen, removeMany, keepOnly, mapKeys
 -}
 
 import Dict exposing (Dict)
@@ -947,11 +947,20 @@ fromDict dict =
     DictList dict (Dict.keys dict)
 
 
+
+-------------
+-- Dict.Extra
+-------------
+
+
 {-| Takes a key-fn and a list.
-Creates a `Dict` which maps the key to a list of matching elements.
+
+Creates a `DictList` which maps the key to a list of matching elements.
+
     mary = {id=1, name="Mary"}
     jack = {id=2, name="Jack"}
     jill = {id=1, name="Jill"}
+
     groupBy .id [mary, jack, jill] == DictList.fromList [(1, [mary, jill]), (2, [jack])]
 -}
 groupBy : (a -> comparable) -> List a -> DictList comparable (List a)
@@ -964,12 +973,17 @@ groupBy keyfn list =
         list
 
 
-{-| Create a dictionary from a list of values, by passing a function that can get a key from any such value.
-If the function does not return unique keys, earlier values are discarded.
-This can, for instance, be useful when constructing Dicts from a List of records with `id` fields:
+{-| Create a `DictList` from a list of values, by passing a function that can
+get a key from any such value. If the function does not return unique keys,
+earlier values are discarded.
+
+This can, for instance, be useful when constructing a `DictList` from a List of
+records with `id` fields:
+
     mary = {id=1, name="Mary"}
     jack = {id=2, name="Jack"}
     jill = {id=1, name="Jill"}
+
     fromListBy .id [mary, jack, jill] == DictList.fromList [(1, jack), (2, jill)]
 -}
 fromListBy : (a -> comparable) -> List a -> DictList comparable a
@@ -981,6 +995,7 @@ fromListBy keyfn xs =
 
 
 {-| Remove elements which satisfies the predicate.
+
     removeWhen (\_ v -> v == 1) (DictList.fromList [("Mary", 1), ("Jack", 2), ("Jill", 1)]) == DictList.fromList [("Jack", 2)]
 -}
 removeWhen : (comparable -> v -> Bool) -> DictList comparable v -> DictList comparable v
@@ -1007,7 +1022,7 @@ keepOnly set dict =
         set
 
 
-{-| Apply a function to all keys in a dictionary
+{-| Apply a function to all keys in a dictionary.
 -}
 mapKeys : (comparable1 -> comparable2) -> DictList comparable1 v -> DictList comparable2 v
 mapKeys keyMapper dict =
