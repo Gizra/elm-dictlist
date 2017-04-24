@@ -422,7 +422,7 @@ sumTest =
 
 productTest : Test
 productTest =
-    fuzz (fuzzDictList Fuzz.int (Fuzz.intRange -5 5)) "product" <|
+    fuzz (fuzzDictList Fuzz.int (Fuzz.intRange -3 3)) "product" <|
         \subject ->
             DictList.product subject
                 |> Expect.equal (DictList.values subject |> List.product)
