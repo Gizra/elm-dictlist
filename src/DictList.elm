@@ -53,6 +53,10 @@ module DictList
         , insertBefore
         , next
         , previous
+        , RelativePosition(..)
+        , relativePosition
+        , insertRelativeTo
+        , atRelativePosition
           -- JSON
         , decodeObject
         , decodeWithKeys
@@ -88,29 +92,45 @@ between an association list and a `DictList` via `toList` and `fromList`.
 
 # DictList
 
-@docs DictList
+@docs DictList, RelativePosition
 
 # Build
 
+Functions which create or update a `DictList`.
+
 @docs empty, singleton, insert, update, remove
+@docs take, drop
 @docs removeWhen, removeMany, keepOnly
-@docs cons, insertAfter, insertBefore
+@docs cons, insertAfter, insertBefore, insertRelativeTo
 
 # Combine
+
+Functions which combine two `DictLists`.
 
 @docs append, concat
 @docs union, intersect, diff, merge
 
 # Query
 
-@docs isEmpty, member, get, size
-@docs getAt, getKeyAt, indexOfKey
-@docs take, drop, next, previous
-@docs length, head, tail
+Functions which get information about a `DictList`.
+
+@docs isEmpty, size, length
 @docs all, any
 @docs sum, product, maximum, minimum
 
+# Elements
+
+Functions that pick out an element of a `DictList`,
+or provide information about an element.
+
+@docs member, get, getAt, getKeyAt
+@docs indexOfKey, relativePosition, atRelativePosition
+@docs head, tail
+@docs next, previous
+
 # Transform
+
+Functions that transform a `DictList`
 
 @docs map, mapKeys, foldl, foldr, filter, partition
 @docs indexedMap, filterMap, reverse
@@ -118,10 +138,14 @@ between an association list and a `DictList` via `toList` and `fromList`.
 
 # Convert
 
+Functions that convert between a `DictList` and a related type.
+
 @docs keys, values, toList, fromList, fromListBy, groupBy
 @docs toDict, fromDict
 
 # JSON
+
+Functions that help to decode a `DictList`.
 
 @docs decodeObject, decodeArray, decodeArray2, decodeWithKeys, decodeKeysAndValues
 
@@ -159,7 +183,17 @@ type DictList k v
    Another performance issue down the road would be whether to use `Array`
    for the internal implementation rather than `List`.
 -}
---
+
+
+{-| Describes the position of a key in relation to another key (before or after
+it), rather than using an index.
+-}
+type RelativePosition k
+    = BeforeKey k
+    | AfterKey k
+
+
+
 -------
 -- JSON
 -------
@@ -644,6 +678,54 @@ insertBefore beforeKey key value (DictList dict list) =
                             key :: listWithoutKey
     in
         DictList newDict newList
+
+
+{-| Get the position of a key relative to the previous key (or next, if the
+first key). Returns `Nothing` if the key was not found.
+-}
+relativePosition : comparable -> DictList comparable v -> Maybe (RelativePosition comparable)
+relativePosition key dictlist =
+    case previous key dictlist of
+        Just ( previousKey, _ ) ->
+            Just (AfterKey previousKey)
+
+        Nothing ->
+            case next key dictlist of
+                Just ( nextKey, _ ) ->
+                    Just (BeforeKey nextKey)
+
+                Nothing ->
+                    Nothing
+
+
+{-| Gets the key-value pair currently at the indicated relative position.
+-}
+atRelativePosition : RelativePosition comparable -> DictList comparable value -> Maybe ( comparable, value )
+atRelativePosition position dictlist =
+    case position of
+        BeforeKey beforeKey ->
+            previous beforeKey dictlist
+
+        AfterKey afterKey ->
+            next afterKey dictlist
+
+
+{-| Insert a key-value pair into a `DictList`, replacing an existing value if
+the keys collide. The first parameter represents an existing key, while the
+second parameter is the new key. The new key and value will be inserted
+relative to the existing key (even if the new key already exists). If the
+existing key cannot be found, the new key/value pair will be inserted at the
+beginning (if the new key was to be before the existing key) or the end (if the
+new key was to be after).
+-}
+insertRelativeTo : RelativePosition comparable -> comparable -> v -> DictList comparable v -> DictList comparable v
+insertRelativeTo position =
+    case position of
+        BeforeKey beforeKey ->
+            insertBefore beforeKey
+
+        AfterKey afterKey ->
+            insertAfter afterKey
 
 
 
