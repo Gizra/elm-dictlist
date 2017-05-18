@@ -58,6 +58,7 @@ module DictList
         , decodeWithKeys
         , decodeKeysAndValues
         , decodeArray
+        , decodeArray2
           -- Conversion
         , toDict
         , fromDict
@@ -122,7 +123,7 @@ between an association list and a `DictList` via `toList` and `fromList`.
 
 # JSON
 
-@docs decodeObject, decodeArray, decodeWithKeys, decodeKeysAndValues
+@docs decodeObject, decodeArray, decodeArray2, decodeWithKeys, decodeKeysAndValues
 
 -}
 
@@ -224,6 +225,17 @@ decodeArray keyMapper valueDecoder =
     Json.Decode.map
         (List.map (\value -> ( keyMapper value, value )) >> fromList)
         (Json.Decode.list valueDecoder)
+
+
+{-| Decodes a JSON array into the DictList. You supply two decoders. Given an element
+of your JSON array, the first decoder should decode the key, and the second decoder
+should decode the value.
+-}
+decodeArray2 : Decoder comparable -> Decoder value -> Decoder (DictList comparable value)
+decodeArray2 keyDecoder valueDecoder =
+    Json.Decode.map2 (,) keyDecoder valueDecoder
+        |> Json.Decode.list
+        |> Json.Decode.map fromList
 
 
 
