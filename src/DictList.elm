@@ -238,7 +238,7 @@ decodeWithKeys keys func =
                     Err <| err1 ++ "\n" ++ err2
     in
         value
-            |> Json.Decode.andThen
+            |> Json18.andThen
                 (\jsonValue ->
                     case List.foldl (go jsonValue) (Ok empty) keys of
                         Ok result ->
