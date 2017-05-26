@@ -23,8 +23,5 @@ before_install:
 install:
   - npm install
 
-before_script:
-  - pushd tests && sysconfcpus -n 2 elm-make --yes src/Main.elm && popd
-
 script:
-  - npm test
+  - sysconfcpus -n 2 npm test

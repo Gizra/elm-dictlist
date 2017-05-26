@@ -128,10 +128,12 @@ between an association list and a `DictList` via `toList` and `fromList`.
 -}
 
 import Dict exposing (Dict)
-import DictList.Compat exposing (customDecoder, decodeAndThen, first, maybeAndThen, second)
 import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
+import Json.Decode as Json18
 import List.Extra
+import Maybe as Maybe18
 import Set exposing (Set)
+import Tuple exposing (first, second)
 
 
 {-| A `Dict` that maintains an arbitrary ordering of keys (rather than sorting
@@ -201,8 +203,16 @@ decodeWithKeys keys func =
                     -- If we had an error, and we have another one, combine them
                     Err <| err1 ++ "\n" ++ err2
     in
-        customDecoder value
-            (\jsonValue -> List.foldl (go jsonValue) (Ok empty) keys)
+        value
+            |> Json.Decode.andThen
+                (\jsonValue ->
+                    case List.foldl (go jsonValue) (Ok empty) keys of
+                        Ok result ->
+                            Json.Decode.succeed result
+
+                        Err err ->
+                            Json.Decode.fail err
+                )
 
 
 {-| Like `decodeWithKeys`, but you supply a decoder for the keys, rather than the keys themselves.
@@ -213,7 +223,7 @@ decoders in a way that makes that work.
 decodeKeysAndValues : Decoder (List comparable) -> (comparable -> Decoder value) -> Decoder (DictList comparable value)
 decodeKeysAndValues keyDecoder func =
     keyDecoder
-        |> decodeAndThen (\keys -> decodeWithKeys keys func)
+        |> Json18.andThen (\keys -> decodeWithKeys keys func)
 
 
 {-| Given a decoder for the value, and a way of turning the value into a key,
@@ -233,7 +243,7 @@ should decode the value.
 -}
 decodeArray2 : Decoder comparable -> Decoder value -> Decoder (DictList comparable value)
 decodeArray2 keyDecoder valueDecoder =
-    Json.Decode.map2 (,) keyDecoder valueDecoder
+    Json18.map2 (,) keyDecoder valueDecoder
         |> Json.Decode.list
         |> Json.Decode.map fromList
 
@@ -266,7 +276,7 @@ cons key value (DictList dict list) =
 head : DictList comparable value -> Maybe ( comparable, value )
 head (DictList dict list) =
     List.head list
-        |> maybeAndThen (\key -> Dict.get key dict |> Maybe.map (\value -> ( key, value )))
+        |> Maybe18.andThen (\key -> Dict.get key dict |> Maybe.map (\value -> ( key, value )))
 
 
 {-| Extract the rest of the `DictList`, without the first key/value pair.
@@ -528,7 +538,7 @@ indexOfKey key (DictList dict list) =
 next : comparable -> DictList comparable value -> Maybe ( comparable, value )
 next key dictlist =
     indexOfKey key dictlist
-        |> maybeAndThen (\index -> getAt (index + 1) dictlist)
+        |> Maybe18.andThen (\index -> getAt (index + 1) dictlist)
 
 
 {-| Given a key, get the key and value at the previous position.
@@ -536,7 +546,7 @@ next key dictlist =
 previous : comparable -> DictList comparable value -> Maybe ( comparable, value )
 previous key dictlist =
     indexOfKey key dictlist
-        |> maybeAndThen (\index -> getAt (index - 1) dictlist)
+        |> Maybe18.andThen (\index -> getAt (index - 1) dictlist)
 
 
 {-| Gets the key at the specified index (0-based).
@@ -551,7 +561,7 @@ getKeyAt index (DictList dict list) =
 getAt : Int -> DictList comparable value -> Maybe ( comparable, value )
 getAt index (DictList dict list) =
     List.Extra.getAt index list
-        |> maybeAndThen
+        |> Maybe18.andThen
             (\key ->
                 Dict.get key dict
                     |> Maybe.map (\value -> ( key, value ))
