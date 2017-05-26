@@ -104,6 +104,60 @@ decodeValueWithId =
         (field "value" JD.int)
 
 
+{-| Like the above, but where the ID is only the key, not included in the object.
+So, the JSON looks like:
+
+    [ { "id" : 7
+      , "value" : 234
+      }
+    , { "id" : 8
+      , "value": 467
+      }
+    ]
+
+And, in the resulting DictList, the ID is only in the key, not used in the value.
+-}
+jsonArray2AndExpectedResult : Fuzzer ( String, DictList Int ValueWithoutId )
+jsonArray2AndExpectedResult =
+    Fuzz.tuple ( Fuzz.int, Fuzz.int )
+        |> Fuzz.list
+        |> Fuzz.map
+            (\list ->
+                let
+                    go ( key, value ) ( json, expected ) =
+                        if DictList.member key expected then
+                            ( json, expected )
+                        else
+                            ( ("{\"id\": " ++ toString key ++ ", \"value\": " ++ toString value ++ "}") :: json
+                            , DictList.cons key (ValueWithoutId value) expected
+                            )
+                in
+                    list
+                        |> List.foldr go ( [], DictList.empty )
+                        |> (\( json, expected ) ->
+                                ( "[" ++ String.join ", " json ++ "]"
+                                , expected
+                                )
+                           )
+            )
+
+
+type alias ValueWithoutId =
+    { value : Int
+    }
+
+
+decodeKeyForArray2 : Decoder Int
+decodeKeyForArray2 =
+    field "id" JD.int
+
+
+decodeValueWithoutId : Decoder ValueWithoutId
+decodeValueWithoutId =
+    JD.map ValueWithoutId
+        (field "value" JD.int)
+
+
 {-| Like `jsonObjectAndExpectedResult`, but the JSON looks like this:
 
     { keys: [ ]
@@ -159,6 +213,11 @@ jsonTests =
             \( json, expected ) ->
                 json
                     |> JD.decodeString (DictList.decodeArray .id decodeValueWithId)
+                    |> Expect.equal (Ok expected)
+        , fuzz jsonArray2AndExpectedResult "decodeArray2 preserves order" <|
+            \( json, expected ) ->
+                json
+                    |> JD.decodeString (DictList.decodeArray2 decodeKeyForArray2 decodeValueWithoutId)
                     |> Expect.equal (Ok expected)
         , fuzz jsonKeysObjectAndExpectedResult "decodeWithKeys gets expected result" <|
             \( json, expected ) ->
