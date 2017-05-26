@@ -1,4 +1,4 @@
-module DictExtraTests exposing (tests)
+module DictExtraTests exposing (..)
 
 import Fuzz exposing (Fuzzer)
 import DictList exposing (..)
@@ -23,13 +23,6 @@ fuzzIntList =
 
 threeElementList =
     (fromList [ ( 1, 1 ), ( 2, 2 ), ( 3, 3 ) ])
-
-
-tests =
-    describe "List Tests"
-        [ dictExtraUnitTests
-        , dictExtraFuzzTests
-        ]
 
 
 dictExtraUnitTests : Test

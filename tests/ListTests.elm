@@ -1,4 +1,4 @@
-module ListTests exposing (tests)
+module ListTests exposing (..)
 
 {-| This is an adaptation of the `List` tests in elm-lang/core, in order
 to test whether we are a well-behaved list.

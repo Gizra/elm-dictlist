@@ -1,4 +1,4 @@
-module DictTests exposing (tests)
+module DictTests exposing (..)
 
 {-| This is an adaptation of the Elm core tests for `Dict`. The idea is
 to test whether we're a good `Dict` or not.

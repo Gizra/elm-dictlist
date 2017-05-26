@@ -1,4 +1,4 @@
-module DictListTests exposing (tests)
+module DictListTests exposing (..)
 
 {-| These are tests of specifically `DictList` behaviour ... that is,
 things not necessarily tested by the `DictTests` or the `ListTests`.
@@ -963,44 +963,4 @@ removeTest =
                             , pair2
                             ]
                         )
-        ]
-
-
-tests : Test
-tests =
-    describe "DictList tests"
-        [ jsonTests
-        , consTest
-        , headTailConsTest
-        , indexedMapTest
-        , filterMapTest
-        , lengthTest
-        , reverseTest
-        , allTest
-        , anyTest
-        , appendTest
-        , unionTest
-        , concatTest
-        , sumTest
-        , productTest
-        , maximumTest
-        , minimumTest
-        , takeTest
-        , dropTest
-        , sortTest
-        , sortByTest
-        , sortWithTest
-        , indexOfKeyTest
-        , nextTest
-        , previousTest
-        , getKeyAtTest
-        , getAtTest
-        , insertAfterTest
-        , insertBeforeTest
-        , getTest
-        , memberTest
-        , sizeTest
-        , isEmptyTest
-        , insertTest
-        , removeTest
         ]

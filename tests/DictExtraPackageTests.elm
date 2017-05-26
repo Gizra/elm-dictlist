@@ -1,6 +1,5 @@
-module DictExtraPackageTests exposing (tests)
+module DictExtraPackageTests exposing (..)
 
-import Test.Runner.Node exposing (run, TestProgram)
 import Test exposing (Test, describe, test, fuzz, fuzz2)
 import Fuzz exposing (Fuzzer, intRange)
 import Expect
@@ -8,19 +7,6 @@ import Json.Encode exposing (Value)
 import Dict
 import DictList exposing (..)
 import Set
-
-
-tests : Test
-tests =
-    describe "Dict tests"
-        [ groupByTests
-        , fromListByTests
-        , removeWhenTests
-        , removeManyTests
-        , keepOnlyTests
-        , mapKeysTests
-        ]
-
 
 
 -- groupBy
