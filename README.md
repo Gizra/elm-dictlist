@@ -20,7 +20,7 @@ between an association list and a `DictList` via `toList` and `fromList`.
 ## API
 
 For the detailed API, see the
-[Elm package site](http://package.elm-lang.org/packages/Gizra/elm-dict-list/latest),
+[Elm package site](http://package.elm-lang.org/packages/Gizra/elm-dictlist/latest),
 or the links to the right, if you're already there.
 
 ## Installation
