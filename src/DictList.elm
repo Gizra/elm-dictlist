@@ -53,7 +53,6 @@ module DictList
         , insertBefore
         , next
         , previous
-        , RelativePosition
         , relativePosition
         , insertRelativeTo
         , atRelativePosition
@@ -94,7 +93,7 @@ between an association list and a `DictList` via `toList` and `fromList`.
 
 # DictList
 
-@docs DictList, RelativePosition
+@docs DictList
 
 # Build
 
@@ -154,7 +153,7 @@ Functions that help to decode a `DictList`.
 
 -}
 
-import AllDictList exposing (AllDictList)
+import AllDictList exposing (AllDictList, RelativePosition(..))
 import Dict exposing (Dict)
 import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
 import Json.Decode as Json18
@@ -170,13 +169,6 @@ values by a key. You can look at it either way.
 -}
 type alias DictList k v =
     AllDictList k v k
-
-
-{-| Describes the position of a key in relation to another key (before or after
-it), rather than using an index.
--}
-type alias RelativePosition k =
-    AllDictList.RelativePosition k
 
 
 
