@@ -8,7 +8,8 @@
     ],
     "exposed-modules": [
         "AllDictList",
-        "DictList"
+        "DictList",
+        "EveryDictList"
     ],
     "dependencies": {
         "eeue56/elm-all-dict": "2.0.0 <= v < 3.0.0",
