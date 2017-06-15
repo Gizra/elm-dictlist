@@ -77,11 +77,11 @@ module EveryDictList
         , mapKeys
         )
 
-{-| Have you ever wanted a `Dict`, but you need to maintain an arbitrary
+{-| Have you ever wanted an `EveryDict`, but you need to maintain an arbitrary
 ordering of keys? Or, a `List`, but you want to efficiently lookup values
 by a key? With `EveryDictList`, now you can!
 
-`EveryDictList` implements the full API for `Dict` (and should be a drop-in
+`EveryDictList` implements the full API for `EveryDict` (and should be a drop-in
 replacement for it). However, instead of ordering things from lowest
 key to highest key, it allows for an arbitrary ordering.
 
@@ -90,7 +90,7 @@ identical, since we need to account for both keys and values.
 
 An alternative would be to maintain your own "association list" -- that is,
 a `List (k, v)` instead of an `EveryDictList k v`. You can move back and forth
-between an association list and an `EveryDictList` via `toList` and `fromList`.
+between an association list and a dictionary via `toList` and `fromList`.
 
 # EveryDictList
 
@@ -98,7 +98,7 @@ between an association list and an `EveryDictList` via `toList` and `fromList`.
 
 # Build
 
-Functions which create or update an `EveryDictList`.
+Functions which create or update a dictionary.
 
 @docs empty, singleton, insert, update, remove
 @docs take, drop
@@ -107,14 +107,14 @@ Functions which create or update an `EveryDictList`.
 
 # Combine
 
-Functions which combine two `EveryDictLists`.
+Functions which combine two dictionaries.
 
 @docs append, concat
 @docs union, intersect, diff, merge
 
 # Query
 
-Functions which get information about an `EveryDictList`.
+Functions which get information about a dictionary.
 
 @docs isEmpty, size, length
 @docs all, any
@@ -122,7 +122,7 @@ Functions which get information about an `EveryDictList`.
 
 # Elements
 
-Functions that pick out an element of an `EveryDictList`,
+Functions that pick out an element of a dictionary,
 or provide information about an element.
 
 @docs member, get, getAt, getKeyAt
@@ -132,7 +132,7 @@ or provide information about an element.
 
 # Transform
 
-Functions that transform an `EveryDictList`
+Functions that transform a dictionary
 
 @docs map, mapKeys, foldl, foldr, filter, partition
 @docs indexedMap, filterMap, reverse
@@ -140,7 +140,7 @@ Functions that transform an `EveryDictList`
 
 # Convert
 
-Functions that convert between an `EveryDictList` and a related type.
+Functions that convert between a dictionary and a related type.
 
 @docs keys, values, toList, fromList, fromListBy, groupBy
 @docs toDict, fromDict
@@ -148,13 +148,13 @@ Functions that convert between an `EveryDictList` and a related type.
 
 # JSON
 
-Functions that help to decode an `EveryDictList`.
+Functions that help to decode a dictionary.
 
 @docs decodeObject, decodeArray, decodeArray2, decodeWithKeys, decodeKeysAndValues
 
 -}
 
-import AllDictList exposing (AllDictList, RelativePosition(..))
+import AllDictList exposing (AllDictList, RelativePosition)
 import Dict exposing (Dict)
 import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
 import Json.Decode as Json18
@@ -184,7 +184,8 @@ decoder.
 
 Unfortunately, it is not possible to preserve the apparent order of the keys in
 the JSON, because the keys in Javascript objects are fundamentally un-ordered.
-Thus, you will typically need to use `decodeWithKeys` or `decodeArray` instead.
+Thus, you will typically need to have at least your keys in an array in the JSON,
+and use `decodeWithKeys`, `decodeArray` or `decodeArray2`.
 -}
 decodeObject : Decoder a -> Decoder (EveryDictList String a)
 decodeObject =
@@ -193,7 +194,7 @@ decodeObject =
 
 {-| This function produces a decoder you can use if you can decode a list of your keys,
 and given a key, you can produce a decoder for the corresponding value. The
-order within the `EveryDictList` will be the order of your list of keys.
+order within the dictionary will be the order of your list of keys.
 -}
 decodeWithKeys : List k -> (k -> Decoder v) -> Decoder (EveryDictList k v)
 decodeWithKeys =
@@ -211,7 +212,7 @@ decodeKeysAndValues =
 
 
 {-| Given a decoder for the value, and a way of turning the value into a key,
-decode an array of values into an `EveryDictList`. The order within the `EveryDictList`
+decode an array of values into a dictionary. The order within the dictionary
 will be the order of the JSON array.
 -}
 decodeArray : (v -> k) -> Decoder v -> Decoder (EveryDictList k v)
@@ -249,7 +250,7 @@ head =
     AllDictList.head
 
 
-{-| Extract the rest of the `EveryDictList`, without the first key/value pair.
+{-| Extract the rest of the dictionary, without the first key/value pair.
 -}
 tail : EveryDictList k v -> Maybe (EveryDictList k v)
 tail =
@@ -272,7 +273,7 @@ filterMap =
     AllDictList.filterMap
 
 
-{-| The number of key-value pairs in the `EveryDictList`.
+{-| The number of key-value pairs in the dictionary.
 -}
 length : EveryDictList k v -> Int
 length =
@@ -302,8 +303,8 @@ any =
 
 {-| Put two dictionaries together.
 
-If keys collide, preference is given to the value from the second `EveryDictList`.
-Also, the order of the keys in the second `EveryDictList` will be preserved at the
+If keys collide, preference is given to the value from the second dictionary.
+Also, the order of the keys in the second dictionary will be preserved at the
 end of the result.
 
 So, you could think of `append` as biased towards the second argument. The end
@@ -397,7 +398,7 @@ sortWith =
 
 
 {-| Given a key, what index does that key occupy (0-based) in the
-order maintained by the `EveryDictList`?
+order maintained by the dictionary?
 -}
 indexOfKey : k -> EveryDictList k v -> Maybe Int
 indexOfKey =
@@ -432,7 +433,7 @@ getAt =
     AllDictList.getAt
 
 
-{-| Insert a key-value pair into an `EveryDictList`, replacing an existing value if
+{-| Insert a key-value pair into a dictionary, replacing an existing value if
 the keys collide. The first parameter represents an existing key, while the
 second parameter is the new key. The new key and value will be inserted after
 the existing key (even if the new key already exists). If the existing key
@@ -443,7 +444,7 @@ insertAfter =
     AllDictList.insertAfter
 
 
-{-| Insert a key-value pair into an `EveryDictList`, replacing an existing value if
+{-| Insert a key-value pair into a dictionary, replacing an existing value if
 the keys collide. The first parameter represents an existing key, while the
 second parameter is the new key. The new key and value will be inserted before
 the existing key (even if the new key already exists). If the existing key
@@ -469,7 +470,7 @@ atRelativePosition =
     AllDictList.atRelativePosition
 
 
-{-| Insert a key-value pair into an `EveryDictList`, replacing an existing value if
+{-| Insert a key-value pair into a dictionary, replacing an existing value if
 the keys collide. The first parameter represents an existing key, while the
 second parameter is the new key. The new key and value will be inserted
 relative to the existing key (even if the new key already exists). If the
@@ -483,12 +484,12 @@ insertRelativeTo =
 
 
 
---------------
--- From `Dict`
---------------
+-------------------
+-- From `EveryDict`
+-------------------
 
 
-{-| Create an empty `EveryDictList`.
+{-| Create an empty dictionary.
 -}
 empty : EveryDictList k v
 empty =
@@ -510,28 +511,28 @@ get =
     AllDictList.get
 
 
-{-| Determine whether a key is in the `EveryDictList`.
+{-| Determine whether a key is in the dictionary.
 -}
 member : k -> EveryDictList k v -> Bool
 member =
     AllDictList.member
 
 
-{-| Determine the number of key-value pairs in the `EveryDictList`.
+{-| Determine the number of key-value pairs in the dictionary.
 -}
 size : EveryDictList k v -> Int
 size =
     AllDictList.size
 
 
-{-| Determine whether an `EveryDictList` is empty.
+{-| Determine whether a dictionary is empty.
 -}
 isEmpty : EveryDictList k v -> Bool
 isEmpty =
     AllDictList.isEmpty
 
 
-{-| Insert a key-value pair into an `EveryDictList`. Replaces the value when the
+{-| Insert a key-value pair into a dictionary. Replaces the value when the
 keys collide, leaving the keys in the same order as they had been in.
 If the key did not previously exist, it is added to the end of
 the list.
@@ -541,7 +542,7 @@ insert =
     AllDictList.insert
 
 
-{-| Remove a key-value pair from an `EveryDictList`. If the key is not found,
+{-| Remove a key-value pair from a dictionary. If the key is not found,
 no changes are made.
 -}
 remove : k -> EveryDictList k v -> EveryDictList k v
@@ -557,7 +558,7 @@ update =
     AllDictList.update
 
 
-{-| Create an `EveryDictList` with one key-value pair.
+{-| Create a dictionary with one key-value pair.
 -}
 singleton : k -> v -> EveryDictList k v
 singleton =
@@ -569,11 +570,11 @@ singleton =
 
 
 {-| Combine two dictionaries. If keys collide, preference is given
-to the value from the first `EveryDictList`.
+to the value from the first dictionary.
 
-Keys already in the first `EveryDictList` will remain in their original order.
+Keys already in the first dictionary will remain in their original order.
 
-Keys newly added from the second `EveryDictList` will be added at the end.
+Keys newly added from the second dictionary will be added at the end.
 
 So, you might think of `union` as being biased towards the first argument,
 since it preserves both key-order and values from the first argument, only
@@ -587,16 +588,16 @@ union =
     AllDictList.union
 
 
-{-| Keep a key-value pair when its key appears in the second `EveryDictList`.
-Preference is given to values in the first `EveryDictList`. The resulting
-order of keys will be as it was in the first `EveryDictList`.
+{-| Keep a key-value pair when its key appears in the second dictionary.
+Preference is given to values in the first dictionary. The resulting
+order of keys will be as it was in the first dictionary.
 -}
 intersect : EveryDictList k v -> EveryDictList k v -> EveryDictList k v
 intersect =
     AllDictList.intersect
 
 
-{-| Keep a key-value pair when its key does not appear in the second `EveryDictList`.
+{-| Keep a key-value pair when its key does not appear in the second dictionary.
 -}
 diff : EveryDictList k v -> EveryDictList k v -> EveryDictList k v
 diff =
@@ -606,17 +607,17 @@ diff =
 {-| The most general way of combining two dictionaries. You provide three
 accumulators for when a given key appears:
 
-  1. Only in the left `EveryDictList`.
+  1. Only in the left dictionary.
   2. In both dictionaries.
-  3. Only in the right `EveryDictList`.
+  3. Only in the right dictionary.
 
 You then traverse all the keys and values, building up whatever
 you want.
 
-The keys and values from the first `EveryDictList` will be provided first,
-in the order maintained by the first `EveryDictList`. Then, any keys which are
-only in the second `EveryDictList` will be provided, in the order maintained
-by the second `EveryDictList`.
+The keys and values from the first dictionary will be provided first,
+in the order maintained by the first dictionary. Then, any keys which are
+only in the second dictionary will be provided, in the order maintained
+by the second dictionary.
 -}
 merge :
     (k -> a -> result -> result)
@@ -634,23 +635,23 @@ merge =
 -- TRANSFORM
 
 
-{-| Apply a function to all values in an `EveryDictList`.
+{-| Apply a function to all values in a dictionary.
 -}
 map : (k -> a -> b) -> EveryDictList k a -> EveryDictList k b
 map =
     AllDictList.map
 
 
-{-| Fold over the key-value pairs in an `EveryDictList`, in order from the first
-key to the last key (given the arbitrary order maintained by the `EveryDictList`).
+{-| Fold over the key-value pairs in a dictionary, in order from the first
+key to the last key (given the arbitrary order maintained by the dictionary).
 -}
 foldl : (k -> v -> b -> b) -> b -> EveryDictList k v -> b
 foldl =
     AllDictList.foldl
 
 
-{-| Fold over the key-value pairs in an `EveryDictList`, in order from the last
-key to the first key (given the arbitrary order maintained by the `EveryDictList`.
+{-| Fold over the key-value pairs in a dictionary, in order from the last
+key to the first key (given the arbitrary order maintained by the dictionary.
 -}
 foldr : (k -> v -> b -> b) -> b -> EveryDictList k v -> b
 foldr =
@@ -664,7 +665,7 @@ filter =
     AllDictList.filter
 
 
-{-| Partition an `EveryDictList` according to a predicate. The first `EveryDictList`
+{-| Partition a dictionary according to a predicate. The first dictionary
 contains all key-value pairs which satisfy the predicate, and the second
 contains the rest.
 -}
@@ -677,42 +678,42 @@ partition =
 -- LISTS
 
 
-{-| Get all of the keys in an `EveryDictList`, in the order maintained by the `EveryDictList`.
+{-| Get all of the keys in a dictionary, in the order maintained by the dictionary.
 -}
 keys : EveryDictList k v -> List k
 keys =
     AllDictList.keys
 
 
-{-| Get all of the values in an `EveryDictList`, in the order maintained by the `EveryDictList`.
+{-| Get all of the values in a dictionary, in the order maintained by the dictionary.
 -}
 values : EveryDictList k v -> List v
 values =
     AllDictList.values
 
 
-{-| Convert an `EveryDictList` into an association list of key-value pairs, in the order maintained by the `EveryDictList`.
+{-| Convert a dictionary into an association list of key-value pairs, in the order maintained by the dictionary.
 -}
 toList : EveryDictList k v -> List ( k, v )
 toList =
     AllDictList.toList
 
 
-{-| Convert an association list into an `EveryDictList`, maintaining the order of the list.
+{-| Convert an association list into a dictionary, maintaining the order of the list.
 -}
 fromList : List ( k, v ) -> EveryDictList k v
 fromList =
     AllDictList.fromList toString
 
 
-{-| Extract a `Dict` from an `EveryDictList`
+{-| Extract a `Dict` from a dictionary
 -}
 toDict : EveryDictList comparable v -> Dict comparable v
 toDict =
     AllDictList.toDict
 
 
-{-| Given a `Dict`, create an `EveryDictList`. The keys will initially be in the
+{-| Given a `Dict`, create a dictionary. The keys will initially be in the
 order that the `Dict` provides.
 -}
 fromDict : Dict comparable v -> EveryDictList comparable v
@@ -720,14 +721,14 @@ fromDict =
     AllDictList.fromDict
 
 
-{-| Convert an `EveryDictList` to an `AllEveryDictList`
+{-| Convert an `EveryDictList` to an `AllDictList`
 -}
 toAllDictList : EveryDictList k v -> AllDictList k v String
 toAllDictList =
     identity
 
 
-{-| Given an `AllEveryDictList`, create an `EveryDictList`.
+{-| Given an `AllDictList`, create an `EveryDictList`.
 -}
 fromAllDictList : AllDictList k v String -> EveryDictList k v
 fromAllDictList =
@@ -742,7 +743,7 @@ fromAllDictList =
 
 {-| Takes a key-fn and a list.
 
-Creates an `EveryDictList` which maps the key to a list of matching elements.
+Creates a dictionary which maps the key to a list of matching elements.
 
     mary = {id=1, name="Mary"}
     jack = {id=2, name="Jack"}
@@ -755,11 +756,11 @@ groupBy =
     AllDictList.groupBy toString
 
 
-{-| Create an `EveryDictList` from a list of values, by passing a function that can
+{-| Create a dictionary from a list of values, by passing a function that can
 get a key from any such value. If the function does not return unique keys,
 earlier values are discarded.
 
-This can, for instance, be useful when constructing an `EveryDictList` from a List of
+This can, for instance, be useful when constructing a dictionary from a List of
 records with `id` fields:
 
     mary = {id=1, name="Mary"}

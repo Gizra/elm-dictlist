@@ -93,7 +93,7 @@ identical, since we need to account for both keys and values.
 
 An alternative would be to maintain your own "association list" -- that is,
 a `List (k, v)` instead of an `AllDictList k v`. You can move back and forth
-between an association list and an `AllDictList` via `toList` and `fromList`.
+between an association list and a dictionary via `toList` and `fromList`.
 
 # AllDictList
 
@@ -102,7 +102,7 @@ between an association list and an `AllDictList` via `toList` and `fromList`.
 
 # Build
 
-Functions which create or update an `AllDictList`.
+Functions which create or update a dictionary.
 
 @docs empty, singleton, insert, update, remove
 @docs take, drop
@@ -118,7 +118,7 @@ Functions which combine two `AllDictLists`.
 
 # Query
 
-Functions which get information about an `AllDictList`.
+Functions which get information about a dictionary.
 
 @docs isEmpty, size, length
 @docs all, any
@@ -126,7 +126,7 @@ Functions which get information about an `AllDictList`.
 
 # Elements
 
-Functions that pick out an element of an `AllDictList`,
+Functions that pick out an element of a dictionary,
 or provide information about an element.
 
 @docs member, get, getAt, getKeyAt
@@ -136,7 +136,7 @@ or provide information about an element.
 
 # Transform
 
-Functions that transform an `AllDictList`
+Functions that transform a dictionary
 
 @docs map, mapKeys, foldl, foldr, filter, partition
 @docs indexedMap, filterMap, reverse
@@ -144,7 +144,7 @@ Functions that transform an `AllDictList`
 
 # Convert
 
-Functions that convert between an `AllDictList` and a related type.
+Functions that convert between a dictionary and a related type.
 
 @docs keys, values, toList, fromList, fromListBy, groupBy
 @docs toAllDict, fromAllDict
@@ -152,7 +152,7 @@ Functions that convert between an `AllDictList` and a related type.
 
 # JSON
 
-Functions that help to decode an `AllDictList`.
+Functions that help to decode a dictionary.
 
 @docs decodeObject, decodeArray, decodeArray2, decodeWithKeys, decodeKeysAndValues
 
@@ -169,7 +169,7 @@ import Tuple exposing (first, second)
 
 
 {-| An `AllDict` that maintains an arbitrary ordering of keys (rather than sorting
-them, as a normal `AllDict` does. Or, a `List` that permits efficient lookup of
+them, as a normal `AllDict` does). Or, a `List` that permits efficient lookup of
 values by a key. You can look at it either way.
 -}
 type AllDictList k v comparable
@@ -179,7 +179,7 @@ type AllDictList k v comparable
 
 {- I considered something like this instead:
 
-       type AllDictList k v = AllDictList (AllDict k v) (List (k, v))
+       type AllDictList k v comparable = AllDictList (AllDict k v comparable) (List (k, v))
 
    This would speed up some things, because our `List` would have the values
    as well -- we wouldn't have to look them up in the `AllDict` when doing
@@ -189,7 +189,9 @@ type AllDictList k v comparable
    desired performance characteristics.
 
    Another performance issue down the road would be whether to use `Array`
-   for the internal implementation rather than `List`.
+   for the internal implementation rather than `List`. I didn't use `Array`
+   originally because it has some notable bugs, but that is likely to change
+   in Elm 0.19.
 -}
 
 
@@ -213,7 +215,8 @@ decoder.
 
 Unfortunately, it is not possible to preserve the apparent order of the keys in
 the JSON, because the keys in Javascript objects are fundamentally un-ordered.
-Thus, you will typically need to use `decodeWithKeys` or `decodeArray` instead.
+Thus, you will typically need to have at least your keys in an array in the JSON,
+and use `decodeWithKeys`, `decodeArray` or `decodeArray2`.
 -}
 decodeObject : Decoder a -> Decoder (AllDictList String a String)
 decodeObject decoder =
@@ -222,7 +225,7 @@ decodeObject decoder =
 
 {-| This function produces a decoder you can use if you can decode a list of your keys,
 and given a key, you can produce a decoder for the corresponding value. The
-order within the `AllDictList` will be the order of your list of keys.
+order within the resulting dictionary will be the order of your list of keys.
 -}
 decodeWithKeys : (k -> comparable) -> List k -> (k -> Decoder v) -> Decoder (AllDictList k v comparable)
 decodeWithKeys ord keys func =
@@ -269,7 +272,7 @@ decodeKeysAndValues ord keyDecoder func =
 
 
 {-| Given a decoder for the value, and a way of turning the value into a key,
-decode an array of values into an `AllDictList`. The order within the `AllDictList`
+decode an array of values into a dictionary. The order within the dictionary
 will be the order of the JSON array.
 -}
 decodeArray : (k -> comparable) -> (v -> k) -> Decoder v -> Decoder (AllDictList k v comparable)
@@ -321,7 +324,7 @@ head (AllDictList dict list) =
         |> Maybe18.andThen (\key -> AllDict.get key dict |> Maybe.map (\value -> ( key, value )))
 
 
-{-| Extract the rest of the `AllDictList`, without the first key/value pair.
+{-| Extract the rest of the dictionary, without the first key/value pair.
 -}
 tail : AllDictList k v comparable -> Maybe (AllDictList k v comparable)
 tail (AllDictList dict list) =
@@ -369,7 +372,7 @@ filterMap func dictlist =
         foldr go (emptyWithOrdFrom dictlist) dictlist
 
 
-{-| The number of key-value pairs in the `AllDictList`.
+{-| The number of key-value pairs in the dictionary.
 -}
 length : AllDictList k v comparable -> Int
 length =
@@ -411,8 +414,8 @@ any func (AllDictList dict list) =
 
 {-| Put two dictionaries together.
 
-If keys collide, preference is given to the value from the second `AllDictList`.
-Also, the order of the keys in the second `AllDictList` will be preserved at the
+If keys collide, preference is given to the value from the second dictionary.
+Also, the order of the keys in the second dictionary will be preserved at the
 end of the result.
 
 So, you could think of `append` as biased towards the second argument. The end
@@ -533,7 +536,7 @@ drop n (AllDictList dict list) =
 
 {-| Sort values from lowest to highest
 -}
-sort : AllDictList k comparable1 comparable -> AllDictList k comparable1 comparable
+sort : AllDictList k comparable1 comparable2 -> AllDictList k comparable1 comparable2
 sort dictList =
     case dictList of
         AllDictList dict list ->
@@ -574,7 +577,7 @@ sortWith func dictList =
 
 
 {-| Given a key, what index does that key occupy (0-based) in the
-order maintained by the `AllDictList`?
+order maintained by the dictionary?
 -}
 indexOfKey : k -> AllDictList k v comparable -> Maybe Int
 indexOfKey key (AllDictList dict list) =
@@ -616,7 +619,7 @@ getAt index (AllDictList dict list) =
             )
 
 
-{-| Insert a key-value pair into an `AllDictList`, replacing an existing value if
+{-| Insert a key-value pair into a dictionary, replacing an existing value if
 the keys collide. The first parameter represents an existing key, while the
 second parameter is the new key. The new key and value will be inserted after
 the existing key (even if the new key already exists). If the existing key
@@ -655,7 +658,7 @@ insertAfter afterKey key value (AllDictList dict list) =
         AllDictList newDict newList
 
 
-{-| Insert a key-value pair into an `AllDictList`, replacing an existing value if
+{-| Insert a key-value pair into a dictionary, replacing an existing value if
 the keys collide. The first parameter represents an existing key, while the
 second parameter is the new key. The new key and value will be inserted before
 the existing key (even if the new key already exists). If the existing key
@@ -724,7 +727,7 @@ atRelativePosition position dictlist =
             next afterKey dictlist
 
 
-{-| Insert a key-value pair into an `AllDictList`, replacing an existing value if
+{-| Insert a key-value pair into a dictionary, replacing an existing value if
 the keys collide. The first parameter represents an existing key, while the
 second parameter is the new key. The new key and value will be inserted
 relative to the existing key (even if the new key already exists). If the
@@ -786,28 +789,28 @@ get key (AllDictList dict list) =
     AllDict.get key dict
 
 
-{-| Determine whether a key is in the `AllDictList`.
+{-| Determine whether a key is in the dictionary.
 -}
 member : k -> AllDictList k v comparable -> Bool
 member key (AllDictList dict list) =
     AllDict.member key dict
 
 
-{-| Determine the number of key-value pairs in the `AllDictList`.
+{-| Determine the number of key-value pairs in the dictionary.
 -}
 size : AllDictList k v comparable -> Int
 size (AllDictList dict list) =
     AllDict.size dict
 
 
-{-| Determine whether an `AllDictList` is empty.
+{-| Determine whether a dictionary is empty.
 -}
 isEmpty : AllDictList k v comparable -> Bool
 isEmpty (AllDictList dict list) =
     List.isEmpty list
 
 
-{-| Insert a key-value pair into an `AllDictList`. Replaces the value when the
+{-| Insert a key-value pair into a dictionary. Replaces the value when the
 keys collide, leaving the keys in the same order as they had been in.
 If the key did not previously exist, it is added to the end of
 the list.
@@ -829,7 +832,7 @@ insert key value (AllDictList dict list) =
         AllDictList newDict newList
 
 
-{-| Remove a key-value pair from an `AllDictList`. If the key is not found,
+{-| Remove a key-value pair from a dictionary. If the key is not found,
 no changes are made.
 -}
 remove : k -> AllDictList k v comparable -> AllDictList k v comparable
@@ -861,7 +864,7 @@ update key alter dictList =
             insert key value dictList
 
 
-{-| Create an `AllDictList` with one key-value pair.
+{-| Create a dictionary with one key-value pair.
 -}
 singleton : (k -> comparable) -> k -> v -> AllDictList k v comparable
 singleton ord key value =
@@ -873,11 +876,11 @@ singleton ord key value =
 
 
 {-| Combine two dictionaries. If keys collide, preference is given
-to the value from the first `AllDictList`.
+to the value from the first dictionary.
 
-Keys already in the first `AllDictList` will remain in their original order.
+Keys already in the first dictionary will remain in their original order.
 
-Keys newly added from the second `AllDictList` will be added at the end.
+Keys newly added from the second dictionary will be added at the end.
 
 So, you might think of `union` as being biased towards the first argument,
 since it preserves both key-order and values from the first argument, only
@@ -891,16 +894,16 @@ union t1 t2 =
     foldr cons t2 t1
 
 
-{-| Keep a key-value pair when its key appears in the second `AllDictList`.
-Preference is given to values in the first `AllDictList`. The resulting
-order of keys will be as it was in the first `AllDictList`.
+{-| Keep a key-value pair when its key appears in the second dictionary.
+Preference is given to values in the first dictionary. The resulting
+order of keys will be as it was in the first dictionary.
 -}
 intersect : AllDictList k v comparable -> AllDictList k v comparable -> AllDictList k v comparable
 intersect t1 t2 =
     filter (\k _ -> member k t2) t1
 
 
-{-| Keep a key-value pair when its key does not appear in the second `AllDictList`.
+{-| Keep a key-value pair when its key does not appear in the second dictionary.
 -}
 diff : AllDictList k v comparable -> AllDictList k v comparable -> AllDictList k v comparable
 diff t1 t2 =
@@ -910,17 +913,17 @@ diff t1 t2 =
 {-| The most general way of combining two dictionaries. You provide three
 accumulators for when a given key appears:
 
-  1. Only in the left `AllDictList`.
+  1. Only in the left dictionary.
   2. In both dictionaries.
-  3. Only in the right `AllDictList`.
+  3. Only in the right dictionary.
 
 You then traverse all the keys and values, building up whatever
 you want.
 
-The keys and values from the first `AllDictList` will be provided first,
-in the order maintained by the first `AllDictList`. Then, any keys which are
-only in the second `AllDictList` will be provided, in the order maintained
-by the second `AllDictList`.
+The keys and values from the first dictionary will be provided first,
+in the order maintained by the first dictionary. Then, any keys which are
+only in the second dictionary will be provided, in the order maintained
+by the second dictionary.
 -}
 merge :
     (k -> a -> result -> result)
@@ -973,15 +976,15 @@ merge leftFunc bothFunc rightFunc leftDict (AllDictList rightDict rightList) ini
 -- TRANSFORM
 
 
-{-| Apply a function to all values in an `AllDictList`.
+{-| Apply a function to all values in a dictionary.
 -}
 map : (k -> a -> b) -> AllDictList k a comparable -> AllDictList k b comparable
 map func (AllDictList dict list) =
     AllDictList (AllDict.map func dict) list
 
 
-{-| Fold over the key-value pairs in an `AllDictList`, in order from the first
-key to the last key (given the arbitrary order maintained by the `AllDictList`).
+{-| Fold over the key-value pairs in a dictionary, in order from the first
+key to the last key (given the arbitrary order maintained by the dictionary).
 -}
 foldl : (k -> v -> b -> b) -> b -> AllDictList k v comparable -> b
 foldl func accum (AllDictList dict list) =
@@ -992,8 +995,8 @@ foldl func accum (AllDictList dict list) =
         List.foldl go accum list
 
 
-{-| Fold over the key-value pairs in an `AllDictList`, in order from the last
-key to the first key (given the arbitrary order maintained by the `AllDictList`.
+{-| Fold over the key-value pairs in a dictionary, in order from the last
+key to the first key (given the arbitrary order maintained by the dictionary.
 -}
 foldr : (k -> v -> b -> b) -> b -> AllDictList k v comparable -> b
 foldr func accum (AllDictList dict list) =
@@ -1023,7 +1026,7 @@ filter predicate dictList =
         foldl add (emptyWithOrdFrom dictList) dictList
 
 
-{-| Partition an `AllDictList` according to a predicate. The first `AllDictList`
+{-| Partition a dictionary according to a predicate. The first dictionary
 contains all key-value pairs which satisfy the predicate, and the second
 contains the rest.
 -}
@@ -1046,28 +1049,28 @@ partition predicate dict =
 -- LISTS
 
 
-{-| Get all of the keys in an `AllDictList`, in the order maintained by the `AllDictList`.
+{-| Get all of the keys in a dictionary, in the order maintained by the dictionary.
 -}
 keys : AllDictList k v comparable -> List k
 keys (AllDictList dict list) =
     list
 
 
-{-| Get all of the values in an `AllDictList`, in the order maintained by the `AllDictList`.
+{-| Get all of the values in a dictionary, in the order maintained by the dictionary.
 -}
 values : AllDictList k v comparable -> List v
 values dictList =
     foldr (\key value valueList -> value :: valueList) [] dictList
 
 
-{-| Convert an `AllDictList` into an association list of key-value pairs, in the order maintained by the `AllDictList`.
+{-| Convert a dictionary into an association list of key-value pairs, in the order maintained by the dictionary.
 -}
 toList : AllDictList k v comparable -> List ( k, v )
 toList dict =
     foldr (\key value list -> ( key, value ) :: list) [] dict
 
 
-{-| Convert an association list into an `AllDictList`, maintaining the order of the list.
+{-| Convert an association list into a dictionary, maintaining the order of the list.
 -}
 fromList : (k -> comparable) -> List ( k, v ) -> AllDictList k v comparable
 fromList ord assocs =
@@ -1089,7 +1092,7 @@ fromAllDict dict =
     AllDictList dict (AllDict.keys dict)
 
 
-{-| Extract a `Dict` from an `AllDictList`
+{-| Extract a `Dict` from an `AllDictList`.
 -}
 toDict : AllDictList comparable1 v comparable2 -> Dict comparable1 v
 toDict (AllDictList dict list) =
@@ -1116,7 +1119,7 @@ fromDict dict =
 
 {-| Takes a key-fn and a list.
 
-Creates an `AllDictList` which maps the key to a list of matching elements.
+Creates a dictionary which maps the key to a list of matching elements.
 
     mary = {id=1, name="Mary"}
     jack = {id=2, name="Jack"}
@@ -1134,11 +1137,11 @@ groupBy ord keyfn list =
         list
 
 
-{-| Create an `AllDictList` from a list of values, by passing a function that can
+{-| Create a dictionary from a list of values, by passing a function that can
 get a key from any such value. If the function does not return unique keys,
 earlier values are discarded.
 
-This can, for instance, be useful when constructing an `AllDictList` from a List of
+This can, for instance, be useful when constructing a dictionary from a List of
 records with `id` fields:
 
     mary = {id=1, name="Mary"}
@@ -1166,14 +1169,14 @@ removeWhen pred dict =
 
 {-| Remove a key-value pair if its key appears in the set.
 -}
-removeMany : Set comparable -> AllDictList comparable v comparable1 -> AllDictList comparable v comparable1
+removeMany : Set comparable1 -> AllDictList comparable1 v comparable2 -> AllDictList comparable1 v comparable2
 removeMany set dict =
     Set.foldl (\k acc -> remove k acc) dict set
 
 
 {-| Keep a key-value pair if its key appears in the set.
 -}
-keepOnly : Set comparable -> AllDictList comparable v comparable1 -> AllDictList comparable v comparable1
+keepOnly : Set comparable1 -> AllDictList comparable1 v comparable2 -> AllDictList comparable1 v comparable2
 keepOnly set dict =
     Set.foldl
         (\k acc ->
@@ -1215,5 +1218,5 @@ unsafeGet key dict =
 {-| Make an new `AllDict` with the ord from the supplied `AllDict`
 -}
 emptyWithOrdFrom : AllDictList k v1 comparable -> AllDictList k v2 comparable
-emptyWithOrdFrom (AllDictList dict list) =
-    empty (AllDict.getOrd dict)
+emptyWithOrdFrom =
+    empty << getOrd
