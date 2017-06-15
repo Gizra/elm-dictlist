@@ -1,7 +1,7 @@
-module DictList
+module EveryDictList
     exposing
-        ( DictList
-          -- originally from `Dict`
+        ( EveryDictList
+          -- originally from `EveryDict`
         , empty
         , eq
         , singleton
@@ -77,11 +77,11 @@ module DictList
         , mapKeys
         )
 
-{-| Have you ever wanted a `Dict`, but you need to maintain an arbitrary
+{-| Have you ever wanted an `EveryDict`, but you need to maintain an arbitrary
 ordering of keys? Or, a `List`, but you want to efficiently lookup values
-by a key? With `DictList`, now you can!
+by a key? With `EveryDictList`, now you can!
 
-`DictList` implements the full API for `Dict` (and should be a drop-in
+`EveryDictList` implements the full API for `EveryDict` (and should be a drop-in
 replacement for it). However, instead of ordering things from lowest
 key to highest key, it allows for an arbitrary ordering.
 
@@ -89,12 +89,12 @@ We also implement most of the API for `List`. However, the API is not
 identical, since we need to account for both keys and values.
 
 An alternative would be to maintain your own "association list" -- that is,
-a `List (k, v)` instead of a `DictList k v`. You can move back and forth
-between an association list and a `DictList` via `toList` and `fromList`.
+a `List (k, v)` instead of an `EveryDictList k v`. You can move back and forth
+between an association list and a dictionary via `toList` and `fromList`.
 
-# DictList
+# EveryDictList
 
-@docs DictList, eq
+@docs EveryDictList, eq
 
 # Build
 
@@ -154,7 +154,7 @@ Functions that help to decode a dictionary.
 
 -}
 
-import AllDictList exposing (AllDictList, RelativePosition(..))
+import AllDictList exposing (AllDictList, RelativePosition)
 import Dict exposing (Dict)
 import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
 import Json.Decode as Json18
@@ -168,8 +168,8 @@ import Tuple exposing (first, second)
 them, as a normal `Dict` does. Or, a `List` that permits efficient lookup of
 values by a key. You can look at it either way.
 -}
-type alias DictList k v =
-    AllDictList k v k
+type alias EveryDictList k v =
+    AllDictList k v String
 
 
 
@@ -187,7 +187,7 @@ the JSON, because the keys in Javascript objects are fundamentally un-ordered.
 Thus, you will typically need to have at least your keys in an array in the JSON,
 and use `decodeWithKeys`, `decodeArray` or `decodeArray2`.
 -}
-decodeObject : Decoder a -> Decoder (DictList String a)
+decodeObject : Decoder a -> Decoder (EveryDictList String a)
 decodeObject =
     AllDictList.decodeObject
 
@@ -196,9 +196,9 @@ decodeObject =
 and given a key, you can produce a decoder for the corresponding value. The
 order within the dictionary will be the order of your list of keys.
 -}
-decodeWithKeys : List comparable -> (comparable -> Decoder value) -> Decoder (DictList comparable value)
+decodeWithKeys : List k -> (k -> Decoder v) -> Decoder (EveryDictList k v)
 decodeWithKeys =
-    AllDictList.decodeWithKeys identity
+    AllDictList.decodeWithKeys toString
 
 
 {-| Like `decodeWithKeys`, but you supply a decoder for the keys, rather than the keys themselves.
@@ -206,27 +206,27 @@ decodeWithKeys =
 Note that the starting point for all decoders will be the same place, so you need to construct your
 decoders in a way that makes that work.
 -}
-decodeKeysAndValues : Decoder (List comparable) -> (comparable -> Decoder value) -> Decoder (DictList comparable value)
+decodeKeysAndValues : Decoder (List k) -> (k -> Decoder v) -> Decoder (EveryDictList k v)
 decodeKeysAndValues =
-    AllDictList.decodeKeysAndValues identity
+    AllDictList.decodeKeysAndValues toString
 
 
 {-| Given a decoder for the value, and a way of turning the value into a key,
 decode an array of values into a dictionary. The order within the dictionary
 will be the order of the JSON array.
 -}
-decodeArray : (value -> comparable) -> Decoder value -> Decoder (DictList comparable value)
+decodeArray : (v -> k) -> Decoder v -> Decoder (EveryDictList k v)
 decodeArray =
-    AllDictList.decodeArray identity
+    AllDictList.decodeArray toString
 
 
-{-| Decodes a JSON array into the DictList. You supply two decoders. Given an element
+{-| Decodes a JSON array into the EveryDictList. You supply two decoders. Given an element
 of your JSON array, the first decoder should decode the key, and the second decoder
 should decode the value.
 -}
-decodeArray2 : Decoder comparable -> Decoder value -> Decoder (DictList comparable value)
+decodeArray2 : Decoder k -> Decoder v -> Decoder (EveryDictList k v)
 decodeArray2 =
-    AllDictList.decodeArray2 identity
+    AllDictList.decodeArray2 toString
 
 
 
@@ -238,21 +238,21 @@ decodeArray2 =
 {-| Insert a key-value pair at the front. Moves the key to the front if
     it already exists.
 -}
-cons : comparable -> value -> DictList comparable value -> DictList comparable value
+cons : k -> v -> EveryDictList k v -> EveryDictList k v
 cons =
     AllDictList.cons
 
 
 {-| Gets the first key with its value.
 -}
-head : DictList comparable value -> Maybe ( comparable, value )
+head : EveryDictList k v -> Maybe ( k, v )
 head =
     AllDictList.head
 
 
 {-| Extract the rest of the dictionary, without the first key/value pair.
 -}
-tail : DictList comparable value -> Maybe (DictList comparable value)
+tail : EveryDictList k v -> Maybe (EveryDictList k v)
 tail =
     AllDictList.tail
 
@@ -260,7 +260,7 @@ tail =
 {-| Like `map` but the function is also given the index of each
 element (starting at zero).
 -}
-indexedMap : (Int -> comparable -> a -> b) -> DictList comparable a -> DictList comparable b
+indexedMap : (Int -> k -> a -> b) -> EveryDictList k a -> EveryDictList k b
 indexedMap =
     AllDictList.indexedMap
 
@@ -268,35 +268,35 @@ indexedMap =
 {-| Apply a function that may succeed to all key-value pairs, but only keep
 the successes.
 -}
-filterMap : (comparable -> a -> Maybe b) -> DictList comparable a -> DictList comparable b
+filterMap : (k -> a -> Maybe b) -> EveryDictList k a -> EveryDictList k b
 filterMap =
     AllDictList.filterMap
 
 
 {-| The number of key-value pairs in the dictionary.
 -}
-length : DictList comparable value -> Int
+length : EveryDictList k v -> Int
 length =
     AllDictList.length
 
 
 {-| Reverse the order of the key-value pairs.
 -}
-reverse : DictList comparable value -> DictList comparable value
+reverse : EveryDictList k v -> EveryDictList k v
 reverse =
     AllDictList.reverse
 
 
 {-| Determine if all elements satisfy the predicate.
 -}
-all : (comparable -> value -> Bool) -> DictList comparable value -> Bool
+all : (k -> v -> Bool) -> EveryDictList k v -> Bool
 all =
     AllDictList.all
 
 
 {-| Determine if any elements satisfy the predicate.
 -}
-any : (comparable -> value -> Bool) -> DictList comparable value -> Bool
+any : (k -> v -> Bool) -> EveryDictList k v -> Bool
 any =
     AllDictList.any
 
@@ -314,7 +314,7 @@ that is, those keys (and their values) that were not in the second argument.
 
 For a similar function that is biased towards the first argument, see `union`.
 -}
-append : DictList comparable value -> DictList comparable value -> DictList comparable value
+append : EveryDictList k v -> EveryDictList k v -> EveryDictList k v
 append =
     AllDictList.append
 
@@ -323,70 +323,70 @@ append =
 
 Works from left to right, applying `append` as it goes.
 -}
-concat : List (DictList comparable value) -> DictList comparable value
+concat : List (EveryDictList k v) -> EveryDictList k v
 concat =
-    AllDictList.concat identity
+    AllDictList.concat toString
 
 
 {-| Get the sum of the values.
 -}
-sum : DictList comparable number -> number
+sum : EveryDictList k number -> number
 sum =
     AllDictList.sum
 
 
 {-| Get the product of the values.
 -}
-product : DictList comparable number -> number
+product : EveryDictList k number -> number
 product =
     AllDictList.product
 
 
 {-| Find the maximum value. Returns `Nothing` if empty.
 -}
-maximum : DictList comparable1 comparable2 -> Maybe comparable2
+maximum : EveryDictList k comparable -> Maybe comparable
 maximum =
     AllDictList.maximum
 
 
 {-| Find the minimum value. Returns `Nothing` if empty.
 -}
-minimum : DictList comparable1 comparable2 -> Maybe comparable2
+minimum : EveryDictList k comparable -> Maybe comparable
 minimum =
     AllDictList.minimum
 
 
 {-| Take the first *n* values.
 -}
-take : Int -> DictList comparable value -> DictList comparable value
+take : Int -> EveryDictList k v -> EveryDictList k v
 take =
     AllDictList.take
 
 
 {-| Drop the first *n* values.
 -}
-drop : Int -> DictList comparable value -> DictList comparable value
+drop : Int -> EveryDictList k v -> EveryDictList k v
 drop =
     AllDictList.drop
 
 
 {-| Sort values from lowest to highest
 -}
-sort : DictList comparable1 comparable2 -> DictList comparable1 comparable2
+sort : EveryDictList k comparable -> EveryDictList k comparable
 sort =
     AllDictList.sort
 
 
 {-| Sort values by a derived property.
 -}
-sortBy : (value -> comparable) -> DictList comparable2 value -> DictList comparable2 value
+sortBy : (v -> comparable) -> EveryDictList k v -> EveryDictList k v
 sortBy =
     AllDictList.sortBy
 
 
 {-| Sort values with a custom comparison function.
 -}
-sortWith : (value -> value -> Order) -> DictList comparable value -> DictList comparable value
+sortWith : (v -> v -> Order) -> EveryDictList k v -> EveryDictList k v
 sortWith =
     AllDictList.sortWith
 
@@ -400,35 +400,35 @@ sortWith =
 {-| Given a key, what index does that key occupy (0-based) in the
 order maintained by the dictionary?
 -}
-indexOfKey : comparable -> DictList comparable value -> Maybe Int
+indexOfKey : k -> EveryDictList k v -> Maybe Int
 indexOfKey =
     AllDictList.indexOfKey
 
 
 {-| Given a key, get the key and value at the next position.
 -}
-next : comparable -> DictList comparable value -> Maybe ( comparable, value )
+next : k -> EveryDictList k v -> Maybe ( k, v )
 next =
     AllDictList.next
 
 
 {-| Given a key, get the key and value at the previous position.
 -}
-previous : comparable -> DictList comparable value -> Maybe ( comparable, value )
+previous : k -> EveryDictList k v -> Maybe ( k, v )
 previous =
     AllDictList.previous
 
 
 {-| Gets the key at the specified index (0-based).
 -}
-getKeyAt : Int -> DictList comparable value -> Maybe comparable
+getKeyAt : Int -> EveryDictList k v -> Maybe k
 getKeyAt =
     AllDictList.getKeyAt
 
 
 {-| Gets the key and value at the specified index (0-based).
 -}
-getAt : Int -> DictList comparable value -> Maybe ( comparable, value )
+getAt : Int -> EveryDictList k v -> Maybe ( k, v )
 getAt =
     AllDictList.getAt
 
@@ -439,7 +439,7 @@ second parameter is the new key. The new key and value will be inserted after
 the existing key (even if the new key already exists). If the existing key
 cannot be found, the new key/value pair will be inserted at the end.
 -}
-insertAfter : comparable -> comparable -> v -> DictList comparable v -> DictList comparable v
+insertAfter : k -> k -> v -> EveryDictList k v -> EveryDictList k v
 insertAfter =
     AllDictList.insertAfter
 
@@ -450,7 +450,7 @@ second parameter is the new key. The new key and value will be inserted before
 the existing key (even if the new key already exists). If the existing key
 cannot be found, the new key/value pair will be inserted at the beginning.
 -}
-insertBefore : comparable -> comparable -> v -> DictList comparable v -> DictList comparable v
+insertBefore : k -> k -> v -> EveryDictList k v -> EveryDictList k v
 insertBefore =
     AllDictList.insertBefore
 
@@ -458,14 +458,14 @@ insertBefore =
 {-| Get the position of a key relative to the previous key (or next, if the
 first key). Returns `Nothing` if the key was not found.
 -}
-relativePosition : comparable -> DictList comparable v -> Maybe (RelativePosition comparable)
+relativePosition : k -> EveryDictList k v -> Maybe (RelativePosition k)
 relativePosition =
     AllDictList.relativePosition
 
 
 {-| Gets the key-value pair currently at the indicated relative position.
 -}
-atRelativePosition : RelativePosition comparable -> DictList comparable value -> Maybe ( comparable, value )
+atRelativePosition : RelativePosition k -> EveryDictList k v -> Maybe ( k, v )
 atRelativePosition =
     AllDictList.atRelativePosition
 
@@ -478,27 +478,27 @@ existing key cannot be found, the new key/value pair will be inserted at the
 beginning (if the new key was to be before the existing key) or the end (if the
 new key was to be after).
 -}
-insertRelativeTo : RelativePosition comparable -> comparable -> v -> DictList comparable v -> DictList comparable v
+insertRelativeTo : RelativePosition k -> k -> v -> EveryDictList k v -> EveryDictList k v
 insertRelativeTo =
     AllDictList.insertRelativeTo
 
 
 
---------------
--- From `Dict`
---------------
+-------------------
+-- From `EveryDict`
+-------------------
 
 
 {-| Create an empty dictionary.
 -}
-empty : DictList comparable v
+empty : EveryDictList k v
 empty =
-    AllDictList.empty identity
+    AllDictList.empty toString
 
 
 {-| Element equality.
 -}
-eq : DictList comparable v -> DictList comparable v -> Bool
+eq : EveryDictList k v -> EveryDictList k v -> Bool
 eq =
     AllDictList.eq
 
@@ -506,28 +506,28 @@ eq =
 {-| Get the value associated with a key. If the key is not found, return
 `Nothing`.
 -}
-get : comparable -> DictList comparable v -> Maybe v
+get : k -> EveryDictList k v -> Maybe v
 get =
     AllDictList.get
 
 
 {-| Determine whether a key is in the dictionary.
 -}
-member : comparable -> DictList comparable v -> Bool
+member : k -> EveryDictList k v -> Bool
 member =
     AllDictList.member
 
 
 {-| Determine the number of key-value pairs in the dictionary.
 -}
-size : DictList comparable v -> Int
+size : EveryDictList k v -> Int
 size =
     AllDictList.size
 
 
 {-| Determine whether a dictionary is empty.
 -}
-isEmpty : DictList comparable v -> Bool
+isEmpty : EveryDictList k v -> Bool
 isEmpty =
     AllDictList.isEmpty
 
@@ -537,7 +537,7 @@ keys collide, leaving the keys in the same order as they had been in.
 If the key did not previously exist, it is added to the end of
 the list.
 -}
-insert : comparable -> v -> DictList comparable v -> DictList comparable v
+insert : k -> v -> EveryDictList k v -> EveryDictList k v
 insert =
     AllDictList.insert
 
@@ -545,7 +545,7 @@ insert =
 {-| Remove a key-value pair from a dictionary. If the key is not found,
 no changes are made.
 -}
-remove : comparable -> DictList comparable v -> DictList comparable v
+remove : k -> EveryDictList k v -> EveryDictList k v
 remove =
     AllDictList.remove
 
@@ -553,16 +553,16 @@ remove =
 {-| Update the value for a specific key with a given function. Maintains
 the order of the key, or inserts it at the end if it is new.
 -}
-update : comparable -> (Maybe v -> Maybe v) -> DictList comparable v -> DictList comparable v
+update : k -> (Maybe v -> Maybe v) -> EveryDictList k v -> EveryDictList k v
 update =
     AllDictList.update
 
 
 {-| Create a dictionary with one key-value pair.
 -}
-singleton : comparable -> v -> DictList comparable v
+singleton : k -> v -> EveryDictList k v
 singleton =
-    AllDictList.singleton identity
+    AllDictList.singleton toString
 
 
 
@@ -583,7 +583,7 @@ present in the first. This seems to correspond best to the logic of `Dict.union`
 
 For a similar function that is biased towards the second argument, see `append`.
 -}
-union : DictList comparable v -> DictList comparable v -> DictList comparable v
+union : EveryDictList k v -> EveryDictList k v -> EveryDictList k v
 union =
     AllDictList.union
 
@@ -592,14 +592,14 @@ union =
 Preference is given to values in the first dictionary. The resulting
 order of keys will be as it was in the first dictionary.
 -}
-intersect : DictList comparable v -> DictList comparable v -> DictList comparable v
+intersect : EveryDictList k v -> EveryDictList k v -> EveryDictList k v
 intersect =
     AllDictList.intersect
 
 
 {-| Keep a key-value pair when its key does not appear in the second dictionary.
 -}
-diff : DictList comparable v -> DictList comparable v -> DictList comparable v
+diff : EveryDictList k v -> EveryDictList k v -> EveryDictList k v
 diff =
     AllDictList.diff
 
@@ -620,11 +620,11 @@ only in the second dictionary will be provided, in the order maintained
 by the second dictionary.
 -}
 merge :
-    (comparable -> a -> result -> result)
-    -> (comparable -> a -> b -> result -> result)
-    -> (comparable -> b -> result -> result)
-    -> DictList comparable a
-    -> DictList comparable b
+    (k -> a -> result -> result)
+    -> (k -> a -> b -> result -> result)
+    -> (k -> b -> result -> result)
+    -> EveryDictList k a
+    -> EveryDictList k b
     -> result
     -> result
 merge =
@@ -637,7 +637,7 @@ merge =
 
 {-| Apply a function to all values in a dictionary.
 -}
-map : (comparable -> a -> b) -> DictList comparable a -> DictList comparable b
+map : (k -> a -> b) -> EveryDictList k a -> EveryDictList k b
 map =
     AllDictList.map
 
@@ -645,7 +645,7 @@ map =
 {-| Fold over the key-value pairs in a dictionary, in order from the first
 key to the last key (given the arbitrary order maintained by the dictionary).
 -}
-foldl : (comparable -> v -> b -> b) -> b -> DictList comparable v -> b
+foldl : (k -> v -> b -> b) -> b -> EveryDictList k v -> b
 foldl =
     AllDictList.foldl
 
@@ -653,14 +653,14 @@ foldl =
 {-| Fold over the key-value pairs in a dictionary, in order from the last
 key to the first key (given the arbitrary order maintained by the dictionary.
 -}
-foldr : (comparable -> v -> b -> b) -> b -> DictList comparable v -> b
+foldr : (k -> v -> b -> b) -> b -> EveryDictList k v -> b
 foldr =
     AllDictList.foldr
 
 
 {-| Keep a key-value pair when it satisfies a predicate.
 -}
-filter : (comparable -> v -> Bool) -> DictList comparable v -> DictList comparable v
+filter : (k -> v -> Bool) -> EveryDictList k v -> EveryDictList k v
 filter =
     AllDictList.filter
 
@@ -669,7 +669,7 @@ filter =
 contains all key-value pairs which satisfy the predicate, and the second
 contains the rest.
 -}
-partition : (comparable -> v -> Bool) -> DictList comparable v -> ( DictList comparable v, DictList comparable v )
+partition : (k -> v -> Bool) -> EveryDictList k v -> ( EveryDictList k v, EveryDictList k v )
 partition =
     AllDictList.partition
 
@@ -680,57 +680,57 @@ partition =
 
 {-| Get all of the keys in a dictionary, in the order maintained by the dictionary.
 -}
-keys : DictList comparable v -> List comparable
+keys : EveryDictList k v -> List k
 keys =
     AllDictList.keys
 
 
 {-| Get all of the values in a dictionary, in the order maintained by the dictionary.
 -}
-values : DictList comparable v -> List v
+values : EveryDictList k v -> List v
 values =
     AllDictList.values
 
 
 {-| Convert a dictionary into an association list of key-value pairs, in the order maintained by the dictionary.
 -}
-toList : DictList comparable v -> List ( comparable, v )
+toList : EveryDictList k v -> List ( k, v )
 toList =
     AllDictList.toList
 
 
 {-| Convert an association list into a dictionary, maintaining the order of the list.
 -}
-fromList : List ( comparable, v ) -> DictList comparable v
+fromList : List ( k, v ) -> EveryDictList k v
 fromList =
-    AllDictList.fromList identity
+    AllDictList.fromList toString
 
 
-{-| Extract a `Dict` from a `DictList`
+{-| Extract a `Dict` from a dictionary
 -}
-toDict : DictList comparable v -> Dict comparable v
+toDict : EveryDictList comparable v -> Dict comparable v
 toDict =
     AllDictList.toDict
 
 
-{-| Given a `Dict`, create a `DictList`. The keys will initially be in the
+{-| Given a `Dict`, create a dictionary. The keys will initially be in the
 order that the `Dict` provides.
 -}
-fromDict : Dict comparable v -> DictList comparable v
+fromDict : Dict comparable v -> EveryDictList comparable v
 fromDict =
     AllDictList.fromDict
 
 
-{-| Convert a `DictList` to an `AllDictList`
+{-| Convert an `EveryDictList` to an `AllDictList`
 -}
-toAllDictList : DictList comparable v -> AllDictList comparable v comparable
+toAllDictList : EveryDictList k v -> AllDictList k v String
 toAllDictList =
     identity
 
 
-{-| Given an `AllDictList`, create a `DictList`.
+{-| Given an `AllDictList`, create an `EveryDictList`.
 -}
-fromAllDictList : AllDictList comparable v comparable -> DictList comparable v
+fromAllDictList : AllDictList k v String -> EveryDictList k v
 fromAllDictList =
     identity
 
@@ -749,11 +749,11 @@ Creates a dictionary which maps the key to a list of matching elements.
     jack = {id=2, name="Jack"}
     jill = {id=1, name="Jill"}
 
-    groupBy .id [mary, jack, jill] == DictList.fromList [(1, [mary, jill]), (2, [jack])]
+    groupBy .id [mary, jack, jill] == EveryDictList.fromList [(1, [mary, jill]), (2, [jack])]
 -}
-groupBy : (a -> comparable) -> List a -> DictList comparable (List a)
+groupBy : (a -> k) -> List a -> EveryDictList k (List a)
 groupBy =
-    AllDictList.groupBy identity
+    AllDictList.groupBy toString
 
 
 {-| Create a dictionary from a list of values, by passing a function that can
@@ -767,38 +767,38 @@ records with `id` fields:
     jack = {id=2, name="Jack"}
     jill = {id=1, name="Jill"}
 
-    fromListBy .id [mary, jack, jill] == DictList.fromList [(1, jack), (2, jill)]
+    fromListBy .id [mary, jack, jill] == EveryDictList.fromList [(1, jack), (2, jill)]
 -}
-fromListBy : (a -> comparable) -> List a -> DictList comparable a
+fromListBy : (a -> k) -> List a -> EveryDictList k a
 fromListBy =
-    AllDictList.fromListBy identity
+    AllDictList.fromListBy toString
 
 
 {-| Remove elements which satisfies the predicate.
 
-    removeWhen (\_ v -> v == 1) (DictList.fromList [("Mary", 1), ("Jack", 2), ("Jill", 1)]) == DictList.fromList [("Jack", 2)]
+    removeWhen (\_ v -> v == 1) (EveryDictList.fromList [("Mary", 1), ("Jack", 2), ("Jill", 1)]) == EveryDictList.fromList [("Jack", 2)]
 -}
-removeWhen : (comparable -> v -> Bool) -> DictList comparable v -> DictList comparable v
+removeWhen : (k -> v -> Bool) -> EveryDictList k v -> EveryDictList k v
 removeWhen =
     AllDictList.removeWhen
 
 
 {-| Remove a key-value pair if its key appears in the set.
 -}
-removeMany : Set comparable -> DictList comparable v -> DictList comparable v
+removeMany : Set comparable -> EveryDictList comparable v -> EveryDictList comparable v
 removeMany =
     AllDictList.removeMany
 
 
 {-| Keep a key-value pair if its key appears in the set.
 -}
-keepOnly : Set comparable -> DictList comparable v -> DictList comparable v
+keepOnly : Set comparable -> EveryDictList comparable v -> EveryDictList comparable v
 keepOnly =
     AllDictList.keepOnly
 
 
 {-| Apply a function to all keys in a dictionary.
 -}
-mapKeys : (comparable1 -> comparable2) -> DictList comparable1 v -> DictList comparable2 v
+mapKeys : (k1 -> k2) -> EveryDictList k1 v -> EveryDictList k2 v
 mapKeys =
-    AllDictList.mapKeys identity
+    AllDictList.mapKeys toString

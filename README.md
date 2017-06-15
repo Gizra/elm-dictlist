@@ -13,9 +13,10 @@ key to highest key, it allows for an arbitrary ordering.
 We also implement most of the API for `List`. However, the API is not
 identical, since we need to account for both keys and values.
 
-An alternative would be to maintain your own "association list" -- that is,
-a `List (k, v)` instead of a `DictList k v`. You can move back and forth
-between an association list and a `DictList` via `toList` and `fromList`.
+But there's more! What if you would like a dictionary with keys that are
+not comparable, using
+[eeue56/elm-all-dict](http://package.elm-lang.org/packages/Gizra/elm-dictlist/latest)?
+We have thought of you, too, with `AllDictList` and `EveryDictList`.
 
 ## API
 

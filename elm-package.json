@@ -7,9 +7,12 @@
         "src"
     ],
     "exposed-modules": [
-        "DictList"
+        "AllDictList",
+        "DictList",
+        "EveryDictList"
     ],
     "dependencies": {
+        "eeue56/elm-all-dict": "2.0.0 <= v < 3.0.0",
         "elm-community/list-extra": "5.0.0 <= v < 6.0.0",
         "elm-lang/core": "5.0.0 <= v < 6.0.0"
     },
