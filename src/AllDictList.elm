@@ -3,6 +3,9 @@ module AllDictList
         ( AllDictList
           -- originally from `AllDict`
         , empty
+        , eq
+        , fullEq
+        , getOrd
         , singleton
         , insert
         , update
@@ -95,6 +98,7 @@ between an association list and an `AllDictList` via `toList` and `fromList`.
 # AllDictList
 
 @docs AllDictList, RelativePosition
+@docs eq, fullEq, getOrd
 
 # Build
 
@@ -744,11 +748,32 @@ insertRelativeTo position =
 ----------------
 
 
-{-| Create an empty `AllDictList`.
+{-| Create an empty dictionary using a given ord function to calculate hashes.
 -}
 empty : (k -> comparable) -> AllDictList k v comparable
 empty ord =
     AllDictList (AllDict.empty ord) []
+
+
+{-| Element equality. Does not check equality of the ord functions.
+-}
+eq : AllDictList k v comparable -> AllDictList k v comparable -> Bool
+eq first second =
+    (toList first) == (toList second)
+
+
+{-| Element equality and checks referential equality of the ord functions.
+-}
+fullEq : AllDictList k v comparable -> AllDictList k v comparable -> Bool
+fullEq first second =
+    (toList first == toList second) && (getOrd first == getOrd second)
+
+
+{-| Get the ord function used by the dictionary.
+-}
+getOrd : AllDictList k v comparable -> (k -> comparable)
+getOrd (AllDictList dict list) =
+    AllDict.getOrd dict
 
 
 {-| Get the value associated with a key. If the key is not found, return

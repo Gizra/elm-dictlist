@@ -3,6 +3,7 @@ module DictList
         ( DictList
           -- originally from `Dict`
         , empty
+        , eq
         , singleton
         , insert
         , update
@@ -93,7 +94,7 @@ between an association list and a `DictList` via `toList` and `fromList`.
 
 # DictList
 
-@docs DictList
+@docs DictList, eq
 
 # Build
 
@@ -492,6 +493,13 @@ insertRelativeTo =
 empty : DictList comparable v
 empty =
     AllDictList.empty identity
+
+
+{-| Element equality.
+-}
+eq : DictList comparable v -> DictList comparable v -> Bool
+eq =
+    AllDictList.eq
 
 
 {-| Get the value associated with a key. If the key is not found, return

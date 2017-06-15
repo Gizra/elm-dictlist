@@ -1,8 +1,9 @@
 module EveryDictList
     exposing
         ( EveryDictList
-          -- originally from `Dict`
+          -- originally from `EveryDict`
         , empty
+        , eq
         , singleton
         , insert
         , update
@@ -93,7 +94,7 @@ between an association list and an `EveryDictList` via `toList` and `fromList`.
 
 # EveryDictList
 
-@docs EveryDictList
+@docs EveryDictList, eq
 
 # Build
 
@@ -492,6 +493,13 @@ insertRelativeTo =
 empty : EveryDictList k v
 empty =
     AllDictList.empty toString
+
+
+{-| Element equality.
+-}
+eq : EveryDictList k v -> EveryDictList k v -> Bool
+eq =
+    AllDictList.eq
 
 
 {-| Get the value associated with a key. If the key is not found, return
