@@ -96,10 +96,12 @@ An alternative would be to maintain your own "association list" -- that is,
 a `List (k, v)` instead of an `AllDictList k v`. You can move back and forth
 between an association list and a dictionary via `toList` and `fromList`.
 
+
 # AllDictList
 
 @docs AllDictList, RelativePosition
 @docs eq, fullEq, getOrd
+
 
 # Build
 
@@ -110,12 +112,14 @@ Functions which create or update a dictionary.
 @docs removeWhen, removeMany, keepOnly
 @docs cons, insertAfter, insertBefore, insertRelativeTo
 
+
 # Combine
 
 Functions which combine two `AllDictLists`.
 
 @docs append, concat
 @docs union, intersect, diff, merge
+
 
 # Query
 
@@ -124,6 +128,7 @@ Functions which get information about a dictionary.
 @docs isEmpty, size, length
 @docs all, any
 @docs sum, product, maximum, minimum
+
 
 # Elements
 
@@ -152,6 +157,7 @@ Functions that convert between a dictionary and a related type.
 @docs keys, values, toList, fromList, fromListBy, groupBy
 @docs toAllDict, fromAllDict
 @docs toDict, fromDict
+
 
 # JSON
 
@@ -213,13 +219,14 @@ type RelativePosition k
 
 
 {-| Turn any object into a dictionary of key-value pairs, including inherited
-enumerable properties. Fails if _any_ value can't be decoded with the given
+enumerable properties. Fails if *any* value can't be decoded with the given
 decoder.
 
 Unfortunately, it is not possible to preserve the apparent order of the keys in
 the JSON, because the keys in Javascript objects are fundamentally un-ordered.
 Thus, you will typically need to have at least your keys in an array in the JSON,
 and use `decodeWithKeys`, `decodeArray` or `decodeArray2`.
+
 -}
 decodeObject : Decoder a -> Decoder (AllDictList String a String)
 decodeObject decoder =
@@ -267,6 +274,7 @@ decodeWithKeys ord keys func =
 
 Note that the starting point for all decoders will be the same place, so you need to construct your
 decoders in a way that makes that work.
+
 -}
 decodeKeysAndValues : (k -> comparable) -> Decoder (List k) -> (k -> Decoder v) -> Decoder (AllDictList k v comparable)
 decodeKeysAndValues ord keyDecoder func =
@@ -303,7 +311,7 @@ decodeArray2 ord keyDecoder valueDecoder =
 
 
 {-| Insert a key-value pair at the front. Moves the key to the front if
-    it already exists.
+it already exists.
 -}
 cons : k -> v -> AllDictList k v comparable -> AllDictList k v comparable
 cons key value (AllDictList dict list) =
@@ -427,6 +435,7 @@ The front of the result will then be whatever is left from the first argument --
 that is, those keys (and their values) that were not in the second argument.
 
 For a similar function that is biased towards the first argument, see `union`.
+
 -}
 append : AllDictList k v comparable -> AllDictList k v comparable -> AllDictList k v comparable
 append t1 t2 =
@@ -444,6 +453,7 @@ append t1 t2 =
 {-| Concatenate a bunch of dictionaries into a single dictionary.
 
 Works from left to right, applying `append` as it goes.
+
 -}
 concat : (k -> comparable) -> List (AllDictList k v comparable) -> AllDictList k v comparable
 concat ord lists =
@@ -917,6 +927,7 @@ adding things on the right (from the second argument) for keys that were not
 present in the first. This seems to correspond best to the logic of `AllDict.union`.
 
 For a similar function that is biased towards the second argument, see `append`.
+
 -}
 union : AllDictList k v comparable -> AllDictList k v comparable -> AllDictList k v comparable
 union t1 t2 =
@@ -942,9 +953,9 @@ diff t1 t2 =
 {-| The most general way of combining two dictionaries. You provide three
 accumulators for when a given key appears:
 
-  1. Only in the left dictionary.
-  2. In both dictionaries.
-  3. Only in the right dictionary.
+1.  Only in the left dictionary.
+2.  In both dictionaries.
+3.  Only in the right dictionary.
 
 You then traverse all the keys and values, building up whatever
 you want.
@@ -953,6 +964,7 @@ The keys and values from the first dictionary will be provided first,
 in the order maintained by the first dictionary. Then, any keys which are
 only in the second dictionary will be provided, in the order maintained
 by the second dictionary.
+
 -}
 merge :
     (k -> a -> result -> result)
@@ -1155,6 +1167,7 @@ Creates a dictionary which maps the key to a list of matching elements.
     jill = {id=1, name="Jill"}
 
     groupBy .id [mary, jack, jill] == AllDictList.fromList [(1, [mary, jill]), (2, [jack])]
+
 -}
 groupBy : (k -> comparable) -> (v -> k) -> List v -> AllDictList k (List v) comparable
 groupBy ord keyfn list =
@@ -1178,6 +1191,7 @@ records with `id` fields:
     jill = {id=1, name="Jill"}
 
     fromListBy .id [mary, jack, jill] == AllDictList.fromList [(1, jack), (2, jill)]
+
 -}
 fromListBy : (k -> comparable) -> (v -> k) -> List v -> AllDictList k v comparable
 fromListBy ord keyfn xs =
@@ -1190,6 +1204,7 @@ fromListBy ord keyfn xs =
 {-| Remove elements which satisfies the predicate.
 
     removeWhen (\_ v -> v == 1) (AllDictList.fromList [("Mary", 1), ("Jack", 2), ("Jill", 1)]) == AllDictList.fromList [("Jack", 2)]
+
 -}
 removeWhen : (k -> v -> Bool) -> AllDictList k v comparable -> AllDictList k v comparable
 removeWhen pred dict =
