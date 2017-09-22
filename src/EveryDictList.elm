@@ -54,6 +54,7 @@ module EveryDictList
         , insertBefore
         , next
         , previous
+        , reorder
         , relativePosition
         , insertRelativeTo
         , atRelativePosition
@@ -130,13 +131,15 @@ or provide information about an element.
 @docs head, tail
 @docs next, previous
 
+
 # Transform
 
 Functions that transform a dictionary
 
 @docs map, mapKeys, foldl, foldr, filter, partition
-@docs indexedMap, filterMap, reverse
+@docs indexedMap, filterMap, reverse, reorder
 @docs sort, sortBy, sortWith
+
 
 # Convert
 
@@ -417,6 +420,17 @@ next =
 previous : k -> EveryDictList k v -> Maybe ( k, v )
 previous =
     AllDictList.previous
+
+
+{-| Use the supplied keys to reorder the dictionary.
+
+  - Any keys that do not already exist in the dictionary will be ignored.
+  - Any omitted keys will be removed from the dictionary.
+
+-}
+reorder : List k -> EveryDictList k v -> EveryDictList k v
+reorder =
+    AllDictList.reorder
 
 
 {-| Gets the key at the specified index (0-based).

@@ -56,6 +56,7 @@ module AllDictList
         , insertBefore
         , next
         , previous
+        , reorder
         , RelativePosition(..)
         , relativePosition
         , insertRelativeTo
@@ -134,13 +135,15 @@ or provide information about an element.
 @docs head, tail
 @docs next, previous
 
+
 # Transform
 
 Functions that transform a dictionary
 
 @docs map, mapKeys, foldl, foldr, filter, partition
-@docs indexedMap, filterMap, reverse
+@docs indexedMap, filterMap, reverse, reorder
 @docs sort, sortBy, sortWith
+
 
 # Convert
 
@@ -598,6 +601,32 @@ previous : k -> AllDictList k v comparable -> Maybe ( k, v )
 previous key dictlist =
     indexOfKey key dictlist
         |> Maybe18.andThen (\index -> getAt (index - 1) dictlist)
+
+
+{-| Use the supplied keys to reorder the dictionary.
+
+  - Any keys that do not already exist in the dictionary will be ignored.
+  - Any omitted keys will be removed from the dictionary.
+
+-}
+reorder : List k -> AllDictList k v comparable -> AllDictList k v comparable
+reorder newKeys dictlist =
+    -- Conceptually, the easiest way to implement this is just to walk through
+    -- the new keys and build up the new dict by picking out values from the
+    -- old dict. That should be about as efficient as we can make this. We do a
+    -- `foldr` so that we can do an efficient `cons` to build up the new dict.
+    -- It's possible that we could optimize this by acting on the dict and the
+    -- list separately, but not obvious.
+    let
+        go key acc =
+            case get key dictlist of
+                Just value ->
+                    cons key value acc
+
+                Nothing ->
+                    acc
+    in
+        List.foldr go (emptyWithOrdFrom dictlist) newKeys
 
 
 {-| Gets the key at the specified index (0-based).
