@@ -54,6 +54,7 @@ module DictList
         , insertBefore
         , next
         , previous
+        , reorder
         , relativePosition
         , insertRelativeTo
         , atRelativePosition
@@ -92,9 +93,11 @@ An alternative would be to maintain your own "association list" -- that is,
 a `List (k, v)` instead of a `DictList k v`. You can move back and forth
 between an association list and a `DictList` via `toList` and `fromList`.
 
+
 # DictList
 
 @docs DictList, eq
+
 
 # Build
 
@@ -105,12 +108,14 @@ Functions which create or update a dictionary.
 @docs removeWhen, removeMany, keepOnly
 @docs cons, insertAfter, insertBefore, insertRelativeTo
 
+
 # Combine
 
 Functions which combine two dictionaries.
 
 @docs append, concat
 @docs union, intersect, diff, merge
+
 
 # Query
 
@@ -119,6 +124,7 @@ Functions which get information about a dictionary.
 @docs isEmpty, size, length
 @docs all, any
 @docs sum, product, maximum, minimum
+
 
 # Elements
 
@@ -130,13 +136,15 @@ or provide information about an element.
 @docs head, tail
 @docs next, previous
 
+
 # Transform
 
 Functions that transform a dictionary
 
 @docs map, mapKeys, foldl, foldr, filter, partition
-@docs indexedMap, filterMap, reverse
+@docs indexedMap, filterMap, reverse, reorder
 @docs sort, sortBy, sortWith
+
 
 # Convert
 
@@ -145,6 +153,7 @@ Functions that convert between a dictionary and a related type.
 @docs keys, values, toList, fromList, fromListBy, groupBy
 @docs toDict, fromDict
 @docs toAllDictList, fromAllDictList
+
 
 # JSON
 
@@ -179,13 +188,14 @@ type alias DictList k v =
 
 
 {-| Turn any object into a dictionary of key-value pairs, including inherited
-enumerable properties. Fails if _any_ value can't be decoded with the given
+enumerable properties. Fails if *any* value can't be decoded with the given
 decoder.
 
 Unfortunately, it is not possible to preserve the apparent order of the keys in
 the JSON, because the keys in Javascript objects are fundamentally un-ordered.
 Thus, you will typically need to have at least your keys in an array in the JSON,
 and use `decodeWithKeys`, `decodeArray` or `decodeArray2`.
+
 -}
 decodeObject : Decoder a -> Decoder (DictList String a)
 decodeObject =
@@ -205,6 +215,7 @@ decodeWithKeys =
 
 Note that the starting point for all decoders will be the same place, so you need to construct your
 decoders in a way that makes that work.
+
 -}
 decodeKeysAndValues : Decoder (List comparable) -> (comparable -> Decoder value) -> Decoder (DictList comparable value)
 decodeKeysAndValues =
@@ -236,7 +247,7 @@ decodeArray2 =
 
 
 {-| Insert a key-value pair at the front. Moves the key to the front if
-    it already exists.
+it already exists.
 -}
 cons : comparable -> value -> DictList comparable value -> DictList comparable value
 cons =
@@ -313,6 +324,7 @@ The front of the result will then be whatever is left from the first argument --
 that is, those keys (and their values) that were not in the second argument.
 
 For a similar function that is biased towards the first argument, see `union`.
+
 -}
 append : DictList comparable value -> DictList comparable value -> DictList comparable value
 append =
@@ -322,6 +334,7 @@ append =
 {-| Concatenate a bunch of dictionaries into a single dictionary.
 
 Works from left to right, applying `append` as it goes.
+
 -}
 concat : List (DictList comparable value) -> DictList comparable value
 concat =
@@ -417,6 +430,17 @@ next =
 previous : comparable -> DictList comparable value -> Maybe ( comparable, value )
 previous =
     AllDictList.previous
+
+
+{-| Use the supplied keys to reorder the dictionary.
+
+  - Any keys that do not already exist in the dictionary will be ignored.
+  - Any omitted keys will be removed from the dictionary.
+
+-}
+reorder : List comparable -> DictList comparable value -> DictList comparable value
+reorder =
+    AllDictList.reorder
 
 
 {-| Gets the key at the specified index (0-based).
@@ -582,6 +606,7 @@ adding things on the right (from the second argument) for keys that were not
 present in the first. This seems to correspond best to the logic of `Dict.union`.
 
 For a similar function that is biased towards the second argument, see `append`.
+
 -}
 union : DictList comparable v -> DictList comparable v -> DictList comparable v
 union =
@@ -607,9 +632,9 @@ diff =
 {-| The most general way of combining two dictionaries. You provide three
 accumulators for when a given key appears:
 
-  1. Only in the left dictionary.
-  2. In both dictionaries.
-  3. Only in the right dictionary.
+1.  Only in the left dictionary.
+2.  In both dictionaries.
+3.  Only in the right dictionary.
 
 You then traverse all the keys and values, building up whatever
 you want.
@@ -618,6 +643,7 @@ The keys and values from the first dictionary will be provided first,
 in the order maintained by the first dictionary. Then, any keys which are
 only in the second dictionary will be provided, in the order maintained
 by the second dictionary.
+
 -}
 merge :
     (comparable -> a -> result -> result)
@@ -750,6 +776,7 @@ Creates a dictionary which maps the key to a list of matching elements.
     jill = {id=1, name="Jill"}
 
     groupBy .id [mary, jack, jill] == DictList.fromList [(1, [mary, jill]), (2, [jack])]
+
 -}
 groupBy : (a -> comparable) -> List a -> DictList comparable (List a)
 groupBy =
@@ -768,6 +795,7 @@ records with `id` fields:
     jill = {id=1, name="Jill"}
 
     fromListBy .id [mary, jack, jill] == DictList.fromList [(1, jack), (2, jill)]
+
 -}
 fromListBy : (a -> comparable) -> List a -> DictList comparable a
 fromListBy =
@@ -777,6 +805,7 @@ fromListBy =
 {-| Remove elements which satisfies the predicate.
 
     removeWhen (\_ v -> v == 1) (DictList.fromList [("Mary", 1), ("Jack", 2), ("Jill", 1)]) == DictList.fromList [("Jack", 2)]
+
 -}
 removeWhen : (comparable -> v -> Bool) -> DictList comparable v -> DictList comparable v
 removeWhen =

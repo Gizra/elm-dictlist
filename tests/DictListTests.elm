@@ -38,6 +38,7 @@ We also reject duplicate keys (since that would be unexpected JSON).
 
 In addition to the JSON string, we return what we would expect from
 DictList after the string is decoded.
+
 -}
 jsonObjectAndExpectedResult : Fuzzer ( String, DictList String Int )
 jsonObjectAndExpectedResult =
@@ -116,6 +117,7 @@ So, the JSON looks like:
     ]
 
 And, in the resulting DictList, the ID is only in the key, not used in the value.
+
 -}
 jsonArray2AndExpectedResult : Fuzzer ( String, DictList Int ValueWithoutId )
 jsonArray2AndExpectedResult =
@@ -166,6 +168,7 @@ decodeValueWithoutId =
 
 ... that is, we list an array of keys separately, so that we can preserve
 order.
+
 -}
 jsonKeysObjectAndExpectedResult : Fuzzer ( String, DictList String Int )
 jsonKeysObjectAndExpectedResult =
@@ -669,6 +672,33 @@ previousTest =
                 pairs
                     |> DictList.previous 3
                     |> Expect.equal (Just pair2)
+        ]
+
+
+reorderTest : Test
+reorderTest =
+    describe "reorder"
+        [ test "omitted key is omitted" <|
+            \_ ->
+                pairs
+                    |> DictList.reorder [ 3, 2 ]
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ ( 3, 103 )
+                            , ( 2, 102 )
+                            ]
+                        )
+        , test "extraneous key is ignored" <|
+            \_ ->
+                pairs
+                    |> DictList.reorder [ 2, 1, 3, 17 ]
+                    |> Expect.equal
+                        (DictList.fromList
+                            [ ( 2, 102 )
+                            , ( 1, 101 )
+                            , ( 3, 103 )
+                            ]
+                        )
         ]
 
 
