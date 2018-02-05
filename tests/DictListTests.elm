@@ -5,6 +5,7 @@ things not necessarily tested by the `DictTests` or the `ListTests`.
 -}
 
 import Arithmetic exposing (isEven)
+import Date exposing (Date)
 import Dict
 import DictList exposing (DictList)
 import Expect
@@ -808,6 +809,19 @@ insertAfterTest =
         ]
 
 
+type alias Things =
+    DictList Int Thing
+
+
+type alias Thing =
+    { a : Int
+    , b : Int
+    , c : Float
+    , d : Int
+    , e : Date
+    }
+
+
 insertBeforeTest : Test
 insertBeforeTest =
     describe "insertBefore"
@@ -859,6 +873,55 @@ insertBeforeTest =
                             , pair3
                             ]
                         )
+
+        -- From https://github.com/Gizra/elm-dictlist/issues/16
+        , describe "with record value" <|
+            let
+                thing =
+                    Thing 0 0 0 0 (Date.fromTime 0)
+            in
+            [ test "when empty" <|
+                \_ ->
+                    DictList.insertBefore 0 2 thing DictList.empty
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 1
+                            , DictList.keys >> Expect.equal [ 2 ]
+                            ]
+            , test "when inserting before existing key" <|
+                \_ ->
+                    DictList.cons 0 thing DictList.empty
+                        |> DictList.insertBefore 0 2 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 2, 0 ]
+                            ]
+            , test "when inserting before non-existing key" <|
+                \_ ->
+                    DictList.cons 0 thing DictList.empty
+                        |> DictList.insertBefore 7 2 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 2, 0 ]
+                            ]
+            , test "when replacing before existing key" <|
+                \_ ->
+                    DictList.cons 1 thing DictList.empty
+                        |> DictList.cons 0 thing
+                        |> DictList.insertBefore 0 1 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 1, 0 ]
+                            ]
+            , test "when replacing before non-existing key" <|
+                \_ ->
+                    DictList.cons 1 thing DictList.empty
+                        |> DictList.cons 0 thing
+                        |> DictList.insertBefore 8 1 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 1, 0 ]
+                            ]
+            ]
         ]
 
 
