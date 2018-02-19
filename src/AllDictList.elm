@@ -671,28 +671,24 @@ insertAfter afterKey key value (AllDictList dict list) =
             AllDict.insert key value dict
 
         newList =
-            if afterKey == key then
-                -- If we want to insert it after itself, we can short-circuit
-                list
-            else
-                let
-                    listWithoutKey =
-                        if AllDict.member key dict then
-                            List.Extra.remove key list
-                        else
-                            -- If the key wasn't present, we can skip the removal
-                            list
-                in
-                    case List.Extra.elemIndex afterKey listWithoutKey of
-                        Just index ->
-                            -- We found the existing element, so take apart the list
-                            -- and put it back together
-                            List.take (index + 1) listWithoutKey
-                                ++ (key :: List.drop (index + 1) listWithoutKey)
+            let
+                listWithoutKey =
+                    if AllDict.member key dict then
+                        List.Extra.remove key list
+                    else
+                        -- If the key wasn't present, we can skip the removal
+                        list
+            in
+                case List.Extra.elemIndex afterKey listWithoutKey of
+                    Just index ->
+                        -- We found the existing element, so take apart the list
+                        -- and put it back together
+                        List.take (index + 1) listWithoutKey
+                            ++ (key :: List.drop (index + 1) listWithoutKey)
 
-                        Nothing ->
-                            -- The afterKey wasn't found, so we insert the key at the end
-                            listWithoutKey ++ [ key ]
+                    Nothing ->
+                        -- The afterKey wasn't found, so we insert the key at the end
+                        listWithoutKey ++ [ key ]
     in
         AllDictList newDict newList
 
@@ -710,28 +706,24 @@ insertBefore beforeKey key value (AllDictList dict list) =
             AllDict.insert key value dict
 
         newList =
-            if beforeKey == key then
-                -- If we want to insert it before itself, we can short-circuit
-                list
-            else
-                let
-                    listWithoutKey =
-                        if AllDict.member key dict then
-                            List.Extra.remove key list
-                        else
-                            -- If the key wasn't present, we can skip the removal
-                            list
-                in
-                    case List.Extra.elemIndex beforeKey listWithoutKey of
-                        Just index ->
-                            -- We found the existing element, so take apart the list
-                            -- and put it back together
-                            List.take index listWithoutKey
-                                ++ (key :: List.drop index listWithoutKey)
+            let
+                listWithoutKey =
+                    if AllDict.member key dict then
+                        List.Extra.remove key list
+                    else
+                        -- If the key wasn't present, we can skip the removal
+                        list
+            in
+                case List.Extra.elemIndex beforeKey listWithoutKey of
+                    Just index ->
+                        -- We found the existing element, so take apart the list
+                        -- and put it back together
+                        List.take index listWithoutKey
+                            ++ (key :: List.drop index listWithoutKey)
 
-                        Nothing ->
-                            -- The beforeKey wasn't found, so we insert the key at the beginning
-                            key :: listWithoutKey
+                    Nothing ->
+                        -- The beforeKey wasn't found, so we insert the key at the beginning
+                        key :: listWithoutKey
     in
         AllDictList newDict newList
 

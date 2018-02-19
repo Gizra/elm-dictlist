@@ -882,7 +882,7 @@ insertBeforeTest =
             in
             [ test "when empty" <|
                 \_ ->
-                    DictList.insertBefore 0 2 thing DictList.empty
+                    DictList.insertBefore 2 2 thing DictList.empty
                         |> Expect.all
                             [ DictList.values >> List.length >> Expect.equal 1
                             , DictList.keys >> Expect.equal [ 2 ]
