@@ -159,23 +159,22 @@ insertBeforeTest =
                 \_ ->
                     AllDictList.empty ordWithUnreliableEquality
                         |> AllDictList.cons Hide thing
-                        |> AllDictList.cons Run thing
-                        |> AllDictList.insertBefore Run Hide thing
+                        |> AllDictList.cons StandStill thing
+                        |> AllDictList.insertBefore StandStill Hide thing
                         |> Expect.all
                             [ AllDictList.values >> List.length >> Expect.equal 2
                             , AllDictList.toAllDict >> AllDict.size >> Expect.equal 2
-                            , AllDictList.keys >> Expect.equal [ Hide, Run ]
+                            , AllDictList.keys >> Expect.equal [ Hide, StandStill ]
                             ]
             , test "when replacing before non-existing key" <|
                 \_ ->
                     AllDictList.empty ordWithUnreliableEquality
                         |> AllDictList.cons Hide thing
-                        |> AllDictList.cons Run thing
-                        |> AllDictList.insertBefore StandStill Hide thing
+                        |> AllDictList.insertBefore StandStill StandStill thing
                         |> Expect.all
                             [ AllDictList.values >> List.length >> Expect.equal 2
                             , AllDictList.toAllDict >> AllDict.size >> Expect.equal 2
-                            , AllDictList.keys >> Expect.equal [ Hide, Run ]
+                            , AllDictList.keys >> Expect.equal [ StandStill, Hide ]
                             ]
             ]
         ]
