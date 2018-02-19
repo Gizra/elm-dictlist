@@ -804,11 +804,18 @@ eq first second =
     (toList first) == (toList second)
 
 
-{-| Element equality and checks referential equality of the ord functions.
+{-| Element equality, according to the ord functions.
 -}
 fullEq : AllDictList k v comparable -> AllDictList k v comparable -> Bool
 fullEq first second =
-    (toList first == toList second) && (getOrd first == getOrd second)
+    let
+        firstWithOrd =
+            List.map (Tuple.mapFirst (getOrd first)) (toList first)
+
+        secondWithOrd =
+            List.map (Tuple.mapFirst (getOrd second)) (toList second)
+    in
+        firstWithOrd == secondWithOrd
 
 
 {-| Get the ord function used by the dictionary.
