@@ -882,9 +882,10 @@ insertBeforeTest =
             in
             [ test "when empty" <|
                 \_ ->
-                    DictList.insertBefore 2 2 thing DictList.empty
+                    DictList.insertBefore 0 2 thing DictList.empty
                         |> Expect.all
                             [ DictList.values >> List.length >> Expect.equal 1
+                            , DictList.toDict >> Dict.size >> Expect.equal 1
                             , DictList.keys >> Expect.equal [ 2 ]
                             ]
             , test "when inserting before existing key" <|
@@ -893,6 +894,7 @@ insertBeforeTest =
                         |> DictList.insertBefore 0 2 thing
                         |> Expect.all
                             [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
                             , DictList.keys >> Expect.equal [ 2, 0 ]
                             ]
             , test "when inserting before non-existing key" <|
@@ -901,6 +903,7 @@ insertBeforeTest =
                         |> DictList.insertBefore 7 2 thing
                         |> Expect.all
                             [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
                             , DictList.keys >> Expect.equal [ 2, 0 ]
                             ]
             , test "when replacing before existing key" <|
@@ -910,6 +913,7 @@ insertBeforeTest =
                         |> DictList.insertBefore 0 1 thing
                         |> Expect.all
                             [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
                             , DictList.keys >> Expect.equal [ 1, 0 ]
                             ]
             , test "when replacing before non-existing key" <|
@@ -919,6 +923,7 @@ insertBeforeTest =
                         |> DictList.insertBefore 8 1 thing
                         |> Expect.all
                             [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
                             , DictList.keys >> Expect.equal [ 1, 0 ]
                             ]
             ]
