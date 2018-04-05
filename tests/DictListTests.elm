@@ -5,6 +5,7 @@ things not necessarily tested by the `DictTests` or the `ListTests`.
 -}
 
 import Arithmetic exposing (isEven)
+import Date exposing (Date)
 import Dict
 import DictList exposing (DictList)
 import Expect
@@ -55,13 +56,13 @@ jsonObjectAndExpectedResult =
                             , DictList.cons (toString key) value expected
                             )
                 in
-                    list
-                        |> List.foldr go ( [], DictList.empty )
-                        |> (\( json, expected ) ->
-                                ( "{" ++ String.join ", " json ++ "}"
-                                , expected
-                                )
-                           )
+                list
+                    |> List.foldr go ( [], DictList.empty )
+                    |> (\( json, expected ) ->
+                            ( "{" ++ String.join ", " json ++ "}"
+                            , expected
+                            )
+                       )
             )
 
 
@@ -82,13 +83,13 @@ jsonArrayAndExpectedResult =
                             , DictList.cons key (ValueWithId key value) expected
                             )
                 in
-                    list
-                        |> List.foldr go ( [], DictList.empty )
-                        |> (\( json, expected ) ->
-                                ( "[" ++ String.join ", " json ++ "]"
-                                , expected
-                                )
-                           )
+                list
+                    |> List.foldr go ( [], DictList.empty )
+                    |> (\( json, expected ) ->
+                            ( "[" ++ String.join ", " json ++ "]"
+                            , expected
+                            )
+                       )
             )
 
 
@@ -134,13 +135,13 @@ jsonArray2AndExpectedResult =
                             , DictList.cons key (ValueWithoutId value) expected
                             )
                 in
-                    list
-                        |> List.foldr go ( [], DictList.empty )
-                        |> (\( json, expected ) ->
-                                ( "[" ++ String.join ", " json ++ "]"
-                                , expected
-                                )
-                           )
+                list
+                    |> List.foldr go ( [], DictList.empty )
+                    |> (\( json, expected ) ->
+                            ( "[" ++ String.join ", " json ++ "]"
+                            , expected
+                            )
+                       )
             )
 
 
@@ -186,20 +187,20 @@ jsonKeysObjectAndExpectedResult =
                             , DictList.cons (toString key) value expected
                             )
                 in
-                    list
-                        |> List.foldr go ( [], [], DictList.empty )
-                        |> (\( jsonKeys, jsonDict, expected ) ->
-                                let
-                                    keys =
-                                        "\"keys\": [" ++ String.join ", " jsonKeys ++ "]"
+                list
+                    |> List.foldr go ( [], [], DictList.empty )
+                    |> (\( jsonKeys, jsonDict, expected ) ->
+                            let
+                                keys =
+                                    "\"keys\": [" ++ String.join ", " jsonKeys ++ "]"
 
-                                    dict =
-                                        "\"dict\": {" ++ String.join ", " jsonDict ++ "}"
-                                in
-                                    ( "{" ++ keys ++ ", " ++ dict ++ "}"
-                                    , expected
-                                    )
-                           )
+                                dict =
+                                    "\"dict\": {" ++ String.join ", " jsonDict ++ "}"
+                            in
+                            ( "{" ++ keys ++ ", " ++ dict ++ "}"
+                            , expected
+                            )
+                       )
             )
 
 
@@ -231,9 +232,9 @@ jsonTests =
                     valueDecoder key =
                         JD.at [ "dict", key ] JD.int
                 in
-                    json
-                        |> JD.decodeString (DictList.decodeKeysAndValues keyDecoder valueDecoder)
-                        |> Expect.equal (Ok expected)
+                json
+                    |> JD.decodeString (DictList.decodeKeysAndValues keyDecoder valueDecoder)
+                    |> Expect.equal (Ok expected)
         ]
 
 
@@ -255,11 +256,11 @@ consTest =
                     DictList.head result
                         |> Expect.equal (Just ( key, value ))
             in
-                DictList.cons key value dictList
-                    |> Expect.all
-                        [ expectedSize
-                        , expectedHead
-                        ]
+            DictList.cons key value dictList
+                |> Expect.all
+                    [ expectedSize
+                    , expectedHead
+                    ]
 
 
 headTailConsTest : Test
@@ -278,7 +279,7 @@ headTailConsTest =
                     else
                         Just subject
             in
-                Expect.equal expected run
+            Expect.equal expected run
 
 
 indexedMapTest : Test
@@ -311,13 +312,13 @@ indexedMapTest =
                         |> List.map .value
                         |> Expect.equal (DictList.values subject)
             in
-                DictList.indexedMap go subject
-                    |> DictList.values
-                    |> Expect.all
-                        [ expectIndexes
-                        , expectKeys
-                        , expectValues
-                        ]
+            DictList.indexedMap go subject
+                |> DictList.values
+                |> Expect.all
+                    [ expectIndexes
+                    , expectKeys
+                    , expectValues
+                    ]
 
 
 filterMapTest : Test
@@ -545,10 +546,10 @@ sortByTest =
                     subject
                         |> DictList.map (\_ value -> { value = value })
             in
-                withRecord
-                    |> DictList.sortBy .value
-                    |> DictList.toList
-                    |> Expect.equal (DictList.toList withRecord |> List.sortBy (Tuple.second >> .value))
+            withRecord
+                |> DictList.sortBy .value
+                |> DictList.toList
+                |> Expect.equal (DictList.toList withRecord |> List.sortBy (Tuple.second >> .value))
 
 
 sortWithTest : Test
@@ -567,10 +568,10 @@ sortWithTest =
                         GT ->
                             LT
             in
-                subject
-                    |> DictList.sortWith reverseOrder
-                    |> DictList.toList
-                    |> Expect.equal (DictList.toList subject |> List.sortWith (\( _, a ) ( _, b ) -> reverseOrder a b))
+            subject
+                |> DictList.sortWith reverseOrder
+                |> DictList.toList
+                |> Expect.equal (DictList.toList subject |> List.sortWith (\( _, a ) ( _, b ) -> reverseOrder a b))
 
 
 
@@ -808,6 +809,19 @@ insertAfterTest =
         ]
 
 
+type alias Things =
+    DictList Int Thing
+
+
+type alias Thing =
+    { a : Int
+    , b : Int
+    , c : Float
+    , d : Int
+    , e : Date
+    }
+
+
 insertBeforeTest : Test
 insertBeforeTest =
     describe "insertBefore"
@@ -859,6 +873,60 @@ insertBeforeTest =
                             , pair3
                             ]
                         )
+
+        -- From https://github.com/Gizra/elm-dictlist/issues/16
+        , describe "with record value" <|
+            let
+                thing =
+                    Thing 0 0 0 0 (Date.fromTime 0)
+            in
+            [ test "when empty" <|
+                \_ ->
+                    DictList.insertBefore 0 2 thing DictList.empty
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 1
+                            , DictList.toDict >> Dict.size >> Expect.equal 1
+                            , DictList.keys >> Expect.equal [ 2 ]
+                            ]
+            , test "when inserting before existing key" <|
+                \_ ->
+                    DictList.cons 0 thing DictList.empty
+                        |> DictList.insertBefore 0 2 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 2, 0 ]
+                            ]
+            , test "when inserting before non-existing key" <|
+                \_ ->
+                    DictList.cons 0 thing DictList.empty
+                        |> DictList.insertBefore 7 2 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 2, 0 ]
+                            ]
+            , test "when replacing before existing key" <|
+                \_ ->
+                    DictList.cons 1 thing DictList.empty
+                        |> DictList.cons 0 thing
+                        |> DictList.insertBefore 0 1 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 1, 0 ]
+                            ]
+            , test "when replacing before non-existing key" <|
+                \_ ->
+                    DictList.cons 1 thing DictList.empty
+                        |> DictList.cons 0 thing
+                        |> DictList.insertBefore 8 1 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 1, 0 ]
+                            ]
+            ]
         ]
 
 
