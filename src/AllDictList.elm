@@ -315,16 +315,9 @@ it already exists.
 -}
 cons : k -> v -> AllDictList k v comparable -> AllDictList k v comparable
 cons key value (AllDictList dict list) =
-    let
-        restOfList =
-            if AllDict.member key dict then
-                List.Extra.remove key list
-            else
-                list
-    in
-        AllDictList
-            (AllDict.insert key value dict)
-            (key :: restOfList)
+    AllDictList
+        (AllDict.insert key value dict)
+        (key :: removeKey key dict list)
 
 
 {-| Gets the first key with its value.
@@ -1295,3 +1288,21 @@ unsafeGet key dict =
 emptyWithOrdFrom : AllDictList k v1 comparable -> AllDictList k v2 comparable
 emptyWithOrdFrom =
     empty << getOrd
+
+
+{-| Removes a key from the list part, and returns the list.
+-}
+removeKey : k -> AllDict k v comparable -> List k -> List k
+removeKey key dict list =
+    let
+        ord =
+            AllDict.getOrd dict
+
+        keyComparable =
+            ord key
+    in
+        if AllDict.member key dict then
+            List.filter (\k -> ord k /= keyComparable) list
+        else
+            -- If the key wasn't present, we can skip the removal
+            list
