@@ -910,24 +910,10 @@ insert key value (AllDictList dict list) =
 no changes are made.
 -}
 remove : k -> AllDictList k v comparable -> AllDictList k v comparable
-remove key ((AllDictList dict list) as dictList) =
-    if AllDict.member key dict then
-        -- Lists are not particularly optimized for removals ...
-        -- if that becomes a practical issue, we could perhaps
-        -- use an `Array` instead.
-        let
-            ord =
-                AllDict.getOrd dict
-
-            keyComparable =
-                ord key
-        in
-            AllDictList
-                (AllDict.remove key dict)
-                (List.filter (\k -> ord k /= keyComparable) list)
-    else
-        -- We avoid the list removal efficiently in this branch.
-        dictList
+remove key (AllDictList dict list) =
+    AllDictList
+        (AllDict.remove key dict)
+        (removeKey key dict list)
 
 
 {-| Update the value for a specific key with a given function. Maintains
