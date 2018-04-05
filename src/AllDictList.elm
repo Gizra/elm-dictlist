@@ -543,37 +543,31 @@ drop n (AllDictList dict list) =
 {-| Sort values from lowest to highest
 -}
 sort : AllDictList k comparable1 comparable2 -> AllDictList k comparable1 comparable2
-sort dictList =
-    case dictList of
-        AllDictList dict list ->
-            toList dictList
-                |> List.sortBy second
-                |> List.map first
-                |> AllDictList dict
+sort ((AllDictList dict _) as dictList) =
+    toList dictList
+        |> List.sortBy second
+        |> List.map first
+        |> AllDictList dict
 
 
 {-| Sort values by a derived property.
 -}
 sortBy : (v -> comparable1) -> AllDictList k v comparable2 -> AllDictList k v comparable2
-sortBy func dictList =
-    case dictList of
-        AllDictList dict list ->
-            toList dictList
-                |> List.sortBy (func << second)
-                |> List.map first
-                |> AllDictList dict
+sortBy func ((AllDictList dict _) as dictList) =
+    toList dictList
+        |> List.sortBy (func << second)
+        |> List.map first
+        |> AllDictList dict
 
 
 {-| Sort values with a custom comparison function.
 -}
 sortWith : (v -> v -> Order) -> AllDictList k v comparable -> AllDictList k v comparable
-sortWith func dictList =
-    case dictList of
-        AllDictList dict list ->
-            toList dictList
-                |> List.sortWith (\v1 v2 -> func (second v1) (second v2))
-                |> List.map first
-                |> AllDictList dict
+sortWith func ((AllDictList dict _) as dictList) =
+    toList dictList
+        |> List.sortWith (\v1 v2 -> func (second v1) (second v2))
+        |> List.map first
+        |> AllDictList dict
 
 
 
