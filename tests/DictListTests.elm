@@ -243,14 +243,20 @@ consTest =
     fuzz3 Fuzz.int Fuzz.int fuzzIntDictList "cons" <|
         \key value dictList ->
             let
+                resultSize =
+                    if DictList.member key dictList then
+                        DictList.size dictList
+                    else
+                        DictList.size dictList + 1
+
                 expectedSize result =
                     DictList.size result
-                        |> Expect.equal
-                            (if DictList.member key dictList then
-                                DictList.size dictList
-                             else
-                                DictList.size dictList + 1
-                            )
+                        |> Expect.equal resultSize
+
+                expectedListSize result =
+                    DictList.keys result
+                        |> List.length
+                        |> Expect.equal resultSize
 
                 expectedHead result =
                     DictList.head result
@@ -259,6 +265,7 @@ consTest =
             DictList.cons key value dictList
                 |> Expect.all
                     [ expectedSize
+                    , expectedListSize
                     , expectedHead
                     ]
 
