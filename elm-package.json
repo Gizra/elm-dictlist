@@ -1,5 +1,5 @@
 {
-    "version": "2.1.1",
+    "version": "2.1.2",
     "summary": "Dict with arbitrary ordering (like List)",
     "repository": "https://github.com/Gizra/elm-dictlist.git",
     "license": "MIT",
