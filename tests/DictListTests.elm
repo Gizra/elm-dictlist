@@ -813,6 +813,69 @@ insertAfterTest =
                             , ( 17, 117 )
                             ]
                         )
+
+        -- From https://github.com/Gizra/elm-dictlist/issues/16
+        , describe "with record value" <|
+            let
+                thing =
+                    Thing 0 0 0 0 (Date.fromTime 0)
+            in
+            [ test "when empty" <|
+                \_ ->
+                    DictList.insertAfter 0 2 thing DictList.empty
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 1
+                            , DictList.toDict >> Dict.size >> Expect.equal 1
+                            , DictList.keys >> Expect.equal [ 2 ]
+                            ]
+            , test "when inserting after existing key" <|
+                \_ ->
+                    DictList.cons 0 thing DictList.empty
+                        |> DictList.insertAfter 0 2 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 0, 2 ]
+                            ]
+            , test "when inserting after non-existing key" <|
+                \_ ->
+                    DictList.cons 0 thing DictList.empty
+                        |> DictList.insertAfter 7 2 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 0, 2 ]
+                            ]
+            , test "when inserting after same non-existing key" <|
+                \_ ->
+                    DictList.cons 0 thing DictList.empty
+                        |> DictList.insertAfter 7 7 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 0, 7 ]
+                            ]
+            , test "when replacing after existing key" <|
+                \_ ->
+                    DictList.cons 1 thing DictList.empty
+                        |> DictList.cons 0 thing
+                        |> DictList.insertAfter 0 1 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 0, 1 ]
+                            ]
+            , test "when replacing after non-existing key" <|
+                \_ ->
+                    DictList.cons 1 thing DictList.empty
+                        |> DictList.cons 0 thing
+                        |> DictList.insertAfter 8 1 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 0, 1 ]
+                            ]
+            ]
         ]
 
 
@@ -912,6 +975,15 @@ insertBeforeTest =
                             [ DictList.values >> List.length >> Expect.equal 2
                             , DictList.toDict >> Dict.size >> Expect.equal 2
                             , DictList.keys >> Expect.equal [ 2, 0 ]
+                            ]
+            , test "when inserting before same non-existing key" <|
+                \_ ->
+                    DictList.cons 0 thing DictList.empty
+                        |> DictList.insertBefore 7 7 thing
+                        |> Expect.all
+                            [ DictList.values >> List.length >> Expect.equal 2
+                            , DictList.toDict >> Dict.size >> Expect.equal 2
+                            , DictList.keys >> Expect.equal [ 7, 0 ]
                             ]
             , test "when replacing before existing key" <|
                 \_ ->
