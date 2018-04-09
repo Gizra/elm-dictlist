@@ -315,16 +315,9 @@ it already exists.
 -}
 cons : k -> v -> AllDictList k v comparable -> AllDictList k v comparable
 cons key value (AllDictList dict list) =
-    let
-        restOfList =
-            if AllDict.member key dict then
-                List.Extra.remove key list
-            else
-                list
-    in
-        AllDictList
-            (AllDict.insert key value dict)
-            (key :: restOfList)
+    AllDictList
+        (AllDict.insert key value dict)
+        (key :: removeKey key dict list)
 
 
 {-| Gets the first key with its value.
@@ -550,37 +543,31 @@ drop n (AllDictList dict list) =
 {-| Sort values from lowest to highest
 -}
 sort : AllDictList k comparable1 comparable2 -> AllDictList k comparable1 comparable2
-sort dictList =
-    case dictList of
-        AllDictList dict list ->
-            toList dictList
-                |> List.sortBy second
-                |> List.map first
-                |> AllDictList dict
+sort ((AllDictList dict _) as dictList) =
+    toList dictList
+        |> List.sortBy second
+        |> List.map first
+        |> AllDictList dict
 
 
 {-| Sort values by a derived property.
 -}
 sortBy : (v -> comparable1) -> AllDictList k v comparable2 -> AllDictList k v comparable2
-sortBy func dictList =
-    case dictList of
-        AllDictList dict list ->
-            toList dictList
-                |> List.sortBy (func << second)
-                |> List.map first
-                |> AllDictList dict
+sortBy func ((AllDictList dict _) as dictList) =
+    toList dictList
+        |> List.sortBy (func << second)
+        |> List.map first
+        |> AllDictList dict
 
 
 {-| Sort values with a custom comparison function.
 -}
 sortWith : (v -> v -> Order) -> AllDictList k v comparable -> AllDictList k v comparable
-sortWith func dictList =
-    case dictList of
-        AllDictList dict list ->
-            toList dictList
-                |> List.sortWith (\v1 v2 -> func (second v1) (second v2))
-                |> List.map first
-                |> AllDictList dict
+sortWith func ((AllDictList dict _) as dictList) =
+    toList dictList
+        |> List.sortWith (\v1 v2 -> func (second v1) (second v2))
+        |> List.map first
+        |> AllDictList dict
 
 
 
@@ -677,36 +664,47 @@ insertAfter : k -> k -> v -> AllDictList k v comparable -> AllDictList k v compa
 insertAfter afterKey key value (AllDictList dict list) =
     let
         newDict =
+            -- No matter what we do to the list, we definitely put the new
+            -- value in the dict.
             AllDict.insert key value dict
 
-        ord =
-            AllDict.getOrd dict
-
-        afterKeyComparable =
-            ord afterKey
-
-        keyComparable =
-            ord key
-
         newList =
-            let
-                listWithoutKey =
-                    if AllDict.member key dict then
-                        List.filter (\k -> ord k /= keyComparable) list
-                    else
-                        -- If the key wasn't present, we can skip the removal
-                        list
-            in
-                case List.Extra.findIndex (\k -> ord k == afterKeyComparable) listWithoutKey of
-                    Just index ->
-                        -- We found the existing element, so take apart the list
-                        -- and put it back together
-                        List.take (index + 1) listWithoutKey
-                            ++ (key :: List.drop (index + 1) listWithoutKey)
+            if AllDict.member afterKey dict then
+                if equalKeys key afterKey dict then
+                    -- We're inserting the key after itself, so we can
+                    -- short-circuit ...  the list doesn't change.
+                    list
+                else
+                    let
+                        -- We have the afterKey, and we may or may not have the
+                        -- key already.  So, we remove the key ... we'll add it
+                        -- back in after the afterKey
+                        listWithoutKey =
+                            removeKey key dict list
 
-                    Nothing ->
-                        -- The afterKey wasn't found, so we insert the key at the end
-                        listWithoutKey ++ [ key ]
+                        ord =
+                            AllDict.getOrd dict
+
+                        afterKeyComparable =
+                            ord afterKey
+                    in
+                        -- We need to find the afterKey
+                        case List.Extra.findIndex (\k -> ord k == afterKeyComparable) listWithoutKey of
+                            Just index ->
+                                -- We found the existing element, so take apart
+                                -- the list and put it back together, with our
+                                -- key in the right place
+                                List.take (index + 1) listWithoutKey
+                                    ++ (key :: List.drop (index + 1) listWithoutKey)
+
+                            Nothing ->
+                                -- This shouldn't happen, since we tested that
+                                -- the afterKey was present.  So, crash.
+                                Debug.crash "Internal error: AllDictList list not in sync with dict"
+            else
+                -- We didn't have the afterKey. So, just remove the key (in
+                -- case it is present) and add it to the end.
+                removeKey key dict list ++ [ key ]
     in
         AllDictList newDict newList
 
@@ -721,36 +719,47 @@ insertBefore : k -> k -> v -> AllDictList k v comparable -> AllDictList k v comp
 insertBefore beforeKey key value (AllDictList dict list) =
     let
         newDict =
+            -- No matter what we do to the list, we definitely put the new
+            -- value in the dict.
             AllDict.insert key value dict
 
-        ord =
-            AllDict.getOrd dict
-
-        beforeKeyComparable =
-            ord beforeKey
-
-        keyComparable =
-            ord key
-
         newList =
-            let
-                listWithoutKey =
-                    if AllDict.member key dict then
-                        List.filter (\k -> ord k /= keyComparable) list
-                    else
-                        -- If the key wasn't present, we can skip the removal
-                        list
-            in
-                case List.Extra.findIndex (\k -> ord k == beforeKeyComparable) listWithoutKey of
-                    Just index ->
-                        -- We found the existing element, so take apart the list
-                        -- and put it back together
-                        List.take index listWithoutKey
-                            ++ (key :: List.drop index listWithoutKey)
+            if AllDict.member beforeKey dict then
+                if equalKeys key beforeKey dict then
+                    -- We're inserting the key after itself, so we can
+                    -- short-circuit ...  the list doesn't change.
+                    list
+                else
+                    let
+                        -- We have the beforeKey, and we may or may not have
+                        -- the key already.  So, we remove the key ... we'll
+                        -- add it back in before the beforeKey
+                        listWithoutKey =
+                            removeKey key dict list
 
-                    Nothing ->
-                        -- The beforeKey wasn't found, so we insert the key at the beginning
-                        key :: listWithoutKey
+                        ord =
+                            AllDict.getOrd dict
+
+                        beforeKeyComparable =
+                            ord beforeKey
+                    in
+                        -- We need to find the beforeKey
+                        case List.Extra.findIndex (\k -> ord k == beforeKeyComparable) listWithoutKey of
+                            Just index ->
+                                -- We found the existing element, so take apart
+                                -- the list and put it back together, with our
+                                -- key in the right place
+                                List.take index listWithoutKey
+                                    ++ (key :: List.drop index listWithoutKey)
+
+                            Nothing ->
+                                -- This shouldn't happen, since we tested that
+                                -- the afterKey was present.  So, crash.
+                                Debug.crash "Internal error: AllDictList list not in sync with dict"
+            else
+                -- We didn't have the beforeKey. So, just remove the key (in
+                -- case it is present) and add it to the beginning.
+                key :: removeKey key dict list
     in
         AllDictList newDict newList
 
@@ -901,24 +910,10 @@ insert key value (AllDictList dict list) =
 no changes are made.
 -}
 remove : k -> AllDictList k v comparable -> AllDictList k v comparable
-remove key ((AllDictList dict list) as dictList) =
-    if AllDict.member key dict then
-        -- Lists are not particularly optimized for removals ...
-        -- if that becomes a practical issue, we could perhaps
-        -- use an `Array` instead.
-        let
-            ord =
-                AllDict.getOrd dict
-
-            keyComparable =
-                ord key
-        in
-            AllDictList
-                (AllDict.remove key dict)
-                (List.filter (\k -> ord k /= keyComparable) list)
-    else
-        -- We avoid the list removal efficiently in this branch.
-        dictList
+remove key (AllDictList dict list) =
+    AllDictList
+        (AllDict.remove key dict)
+        (removeKey key dict list)
 
 
 {-| Update the value for a specific key with a given function. Maintains
@@ -1295,3 +1290,32 @@ unsafeGet key dict =
 emptyWithOrdFrom : AllDictList k v1 comparable -> AllDictList k v2 comparable
 emptyWithOrdFrom =
     empty << getOrd
+
+
+{-| Removes a key from the list part, and returns the list.
+-}
+removeKey : k -> AllDict k v comparable -> List k -> List k
+removeKey key dict list =
+    let
+        ord =
+            AllDict.getOrd dict
+
+        keyComparable =
+            ord key
+    in
+        if AllDict.member key dict then
+            List.filter (\k -> ord k /= keyComparable) list
+        else
+            -- If the key wasn't present, we can skip the removal
+            list
+
+
+{-| Should we consider the two keys to be equal?
+-}
+equalKeys : k -> k -> AllDict k v comparable -> Bool
+equalKeys key1 key2 dict =
+    let
+        ord =
+            AllDict.getOrd dict
+    in
+        ord key1 == ord key2
