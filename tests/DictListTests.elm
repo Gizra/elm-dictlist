@@ -1009,6 +1009,82 @@ insertBeforeTest =
         ]
 
 
+insertBeforeFuzzTest : Test
+insertBeforeFuzzTest =
+    fuzz4 Fuzz.int Fuzz.int Fuzz.int fuzzIntDictList "fuzz insertAfter" <|
+        \before key value dictList ->
+            let
+                resultSize =
+                    if DictList.member key dictList then
+                        DictList.size dictList
+                    else
+                        DictList.size dictList + 1
+
+                expectedSize result =
+                    DictList.size result
+                        |> Expect.equal resultSize
+
+                expectedDictSize result =
+                    DictList.values result
+                        |> List.length
+                        |> Expect.equal resultSize
+
+                expectedListSize result =
+                    DictList.keys result
+                        |> List.length
+                        |> Expect.equal resultSize
+
+                expectedMember result =
+                    DictList.member key result
+                        |> Expect.equal True
+            in
+            DictList.insertBefore before key value dictList
+                |> Expect.all
+                    [ expectedSize
+                    , expectedDictSize
+                    , expectedListSize
+                    , expectedMember
+                    ]
+
+
+insertAfterFuzzTest : Test
+insertAfterFuzzTest =
+    fuzz4 Fuzz.int Fuzz.int Fuzz.int fuzzIntDictList "fuzz insertBefore" <|
+        \after key value dictList ->
+            let
+                resultSize =
+                    if DictList.member key dictList then
+                        DictList.size dictList
+                    else
+                        DictList.size dictList + 1
+
+                expectedSize result =
+                    DictList.size result
+                        |> Expect.equal resultSize
+
+                expectedDictSize result =
+                    DictList.values result
+                        |> List.length
+                        |> Expect.equal resultSize
+
+                expectedListSize result =
+                    DictList.keys result
+                        |> List.length
+                        |> Expect.equal resultSize
+
+                expectedMember result =
+                    DictList.member key result
+                        |> Expect.equal True
+            in
+            DictList.insertAfter after key value dictList
+                |> Expect.all
+                    [ expectedSize
+                    , expectedDictSize
+                    , expectedListSize
+                    , expectedMember
+                    ]
+
+
 getTest : Test
 getTest =
     fuzz2 Fuzz.int fuzzIntDictList "get" <|
