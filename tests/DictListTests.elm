@@ -1069,3 +1069,35 @@ removeTest =
                             ]
                         )
         ]
+
+
+removeFuzzTest : Test
+removeFuzzTest =
+    fuzz3 Fuzz.int Fuzz.int fuzzIntDictList "renove fuzz" <|
+        \key value dictList ->
+            let
+                resultSize =
+                    if DictList.member key dictList then
+                        DictList.size dictList - 1
+                    else
+                        DictList.size dictList
+
+                expectedSize result =
+                    DictList.size result
+                        |> Expect.equal resultSize
+
+                expectedListSize result =
+                    DictList.keys result
+                        |> List.length
+                        |> Expect.equal resultSize
+
+                expectedMember result =
+                    DictList.member key result
+                        |> Expect.equal False
+            in
+            DictList.remove key dictList
+                |> Expect.all
+                    [ expectedSize
+                    , expectedListSize
+                    , expectedMember
+                    ]
