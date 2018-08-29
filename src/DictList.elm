@@ -1,82 +1,26 @@
-module DictList
-    exposing
-        ( DictList
-          -- originally from `Dict`
-        , empty
-        , eq
-        , singleton
-        , insert
-        , update
-        , isEmpty
-        , get
-        , remove
-        , member
-        , size
-        , filter
-        , partition
-        , foldl
-        , foldr
-        , map
-        , union
-        , intersect
-        , diff
-        , merge
-        , keys
-        , values
-        , toList
-        , fromList
-          -- core `List`
-        , cons
-        , head
-        , tail
-        , indexedMap
-        , filterMap
-        , length
-        , reverse
-        , all
-        , any
-        , append
-        , concat
-        , sum
-        , product
-        , maximum
-        , minimum
-        , take
-        , drop
-        , sort
-        , sortBy
-        , sortWith
-          -- list-oriented
-        , getAt
-        , getKeyAt
-        , indexOfKey
-        , insertAfter
-        , insertBefore
-        , next
-        , previous
-        , reorder
-        , relativePosition
-        , insertRelativeTo
-        , atRelativePosition
-          -- JSON
-        , decodeObject
-        , decodeWithKeys
-        , decodeKeysAndValues
-        , decodeArray
-        , decodeArray2
-          -- Conversion
-        , toDict
-        , toAllDictList
-        , fromDict
-        , fromAllDictList
-          -- Dict.Extra
-        , groupBy
-        , fromListBy
-        , removeWhen
-        , removeMany
-        , keepOnly
-        , mapKeys
-        )
+module DictList exposing
+    ( DictList, eq
+    , empty, singleton, insert, update, remove
+    , take, drop
+    , removeWhen, removeMany, keepOnly
+    , cons, insertAfter, insertBefore, insertRelativeTo
+    , append, concat
+    , union, intersect, diff, merge
+    , isEmpty, size, length
+    , all, any
+    , sum, product, maximum, minimum
+    , member, get, getAt, getKeyAt
+    , indexOfKey, relativePosition, atRelativePosition
+    , head, tail
+    , next, previous
+    , map, mapKeys, foldl, foldr, filter, partition
+    , indexedMap, filterMap, reverse, reorder
+    , sort, sortBy, sortWith
+    , keys, values, toList, fromList, fromListBy, groupBy
+    , toDict, fromDict
+    , toAllDictList, fromAllDictList
+    , decodeObject, decodeArray, decodeArray2, decodeWithKeys, decodeKeysAndValues
+    )
 
 {-| Have you ever wanted a `Dict`, but you need to maintain an arbitrary
 ordering of keys? Or, a `List`, but you want to efficiently lookup values
@@ -165,8 +109,7 @@ Functions that help to decode a dictionary.
 
 import AllDictList exposing (AllDictList, RelativePosition(..))
 import Dict exposing (Dict)
-import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
-import Json.Decode as Json18
+import Json.Decode as Json18 exposing (Decoder, decodeValue, keyValuePairs, value)
 import List.Extra
 import Maybe as Maybe18
 import Set exposing (Set)
@@ -188,7 +131,7 @@ type alias DictList k v =
 
 
 {-| Turn any object into a dictionary of key-value pairs, including inherited
-enumerable properties. Fails if *any* value can't be decoded with the given
+enumerable properties. Fails if _any_ value can't be decoded with the given
 decoder.
 
 Unfortunately, it is not possible to preserve the apparent order of the keys in
@@ -369,14 +312,14 @@ minimum =
     AllDictList.minimum
 
 
-{-| Take the first *n* values.
+{-| Take the first _n_ values.
 -}
 take : Int -> DictList comparable value -> DictList comparable value
 take =
     AllDictList.take
 
 
-{-| Drop the first *n* values.
+{-| Drop the first _n_ values.
 -}
 drop : Int -> DictList comparable value -> DictList comparable value
 drop =
@@ -804,7 +747,7 @@ fromListBy =
 
 {-| Remove elements which satisfies the predicate.
 
-    removeWhen (\_ v -> v == 1) (DictList.fromList [("Mary", 1), ("Jack", 2), ("Jill", 1)]) == DictList.fromList [("Jack", 2)]
+    removeWhen (\_ v -> v == 1) (DictList.fromList [ ( "Mary", 1 ), ( "Jack", 2 ), ( "Jill", 1 ) ]) == DictList.fromList [ ( "Jack", 2 ) ]
 
 -}
 removeWhen : (comparable -> v -> Bool) -> DictList comparable v -> DictList comparable v

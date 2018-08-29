@@ -1,10 +1,10 @@
-module DictExtraTests exposing (..)
+module DictExtraTests exposing (dictExtraFuzzTests, dictExtraUnitTests, fuzzDictList, fuzzIntList, threeElementList)
 
-import Fuzz exposing (Fuzzer)
 import DictList exposing (..)
 import Expect
-import Test exposing (..)
+import Fuzz exposing (Fuzzer)
 import Set
+import Test exposing (..)
 
 
 {-| Fuzz a DictList, given a fuzzer for the keys and values.
@@ -22,7 +22,7 @@ fuzzIntList =
 
 
 threeElementList =
-    (fromList [ ( 1, 1 ), ( 2, 2 ), ( 3, 3 ) ])
+    fromList [ ( 1, 1 ), ( 2, 2 ), ( 3, 3 ) ]
 
 
 dictExtraUnitTests : Test
@@ -32,7 +32,7 @@ dictExtraUnitTests =
             [ test "empty" <| \() -> Expect.equal (groupBy identity []) empty
             , test "always equal elements" <| \() -> Expect.equal (groupBy (always 1) [ 1, 2, 3 ]) (fromList [ ( 1, [ 1, 2, 3 ] ) ])
             , test "map to original key" <| \() -> Expect.equal (groupBy identity [ 1, 2, 3 ]) (fromList [ ( 3, [ 3 ] ), ( 2, [ 2 ] ), ( 1, [ 1 ] ) ])
-            , test "odd-even" <| \() -> Expect.equal (groupBy (\v -> v % 2) [ 1, 2, 3 ]) (fromList [ ( 1, [ 1, 3 ] ), ( 0, [ 2 ] ) ])
+            , test "odd-even" <| \() -> Expect.equal (groupBy (\v -> modBy 2 v) [ 1, 2, 3 ]) (fromList [ ( 1, [ 1, 3 ] ), ( 0, [ 2 ] ) ])
             ]
         , describe "fromListBy"
             [ test "empty" <| \() -> Expect.equal (fromListBy identity []) empty
@@ -71,7 +71,7 @@ dictExtraFuzzTests =
         [ fuzz fuzzIntList "groupBy (total length doesn't change)" <|
             \subject ->
                 Expect.equal (List.length subject)
-                    (groupBy (\v -> v % 2) subject
+                    (groupBy (\v -> modBy 2 v) subject
                         |> toList
                         |> List.map (\( k, v ) -> List.length v)
                         |> List.foldr (+) 0
@@ -81,7 +81,7 @@ dictExtraFuzzTests =
                 Expect.equal
                     (Set.diff (Set.fromList subject)
                         (Set.fromList
-                            (groupBy (\v -> v % 2) subject
+                            (groupBy (\v -> modBy 2 v) subject
                                 |> toList
                                 |> List.foldr (\( k, v ) agg -> List.append v agg) []
                             )

@@ -1,12 +1,13 @@
-module DictExtraPackageTests exposing (..)
+module DictExtraPackageTests exposing (GroupByData, fromListByTests, groupByTests, jack, jill, keepOnlyTests, mapKeysTests, mary, removeManyTests, removeWhenTests)
 
-import Test exposing (Test, describe, test, fuzz, fuzz2)
-import Fuzz exposing (Fuzzer, intRange)
-import Expect
-import Json.Encode exposing (Value)
 import Dict
 import DictList exposing (..)
+import Expect
+import Fuzz exposing (Fuzzer, intRange)
+import Json.Encode exposing (Value)
 import Set
+import Test exposing (Test, describe, fuzz, fuzz2, test)
+
 
 
 -- groupBy

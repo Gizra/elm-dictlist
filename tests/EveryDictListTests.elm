@@ -1,12 +1,12 @@
-module EveryDictListTests exposing (..)
+module EveryDictListTests exposing (Action(..), actionDict, basicTest)
 
-import Test exposing (Test, describe, test, fuzz, fuzz2)
-import Fuzz exposing (Fuzzer, intRange)
-import Expect
-import Json.Encode exposing (Value)
 import Dict
 import EveryDictList exposing (..)
+import Expect
+import Fuzz exposing (Fuzzer, intRange)
+import Json.Encode exposing (Value)
 import Set
+import Test exposing (Test, describe, fuzz, fuzz2, test)
 
 
 type Action
