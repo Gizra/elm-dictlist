@@ -1,4 +1,4 @@
-module AllDictListTests exposing (..)
+module AllDictListTests exposing (Action(..), actionDict, basicTest, insertBeforeTest, ord, ordWithUnreliableEquality, thing)
 
 import AllDict
 import AllDictList exposing (..)

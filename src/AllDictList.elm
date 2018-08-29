@@ -1,85 +1,27 @@
-module AllDictList
-    exposing
-        ( AllDictList
-          -- originally from `AllDict`
-        , empty
-        , eq
-        , fullEq
-        , getOrd
-        , singleton
-        , insert
-        , update
-        , isEmpty
-        , get
-        , remove
-        , member
-        , size
-        , filter
-        , partition
-        , foldl
-        , foldr
-        , map
-        , union
-        , intersect
-        , diff
-        , merge
-        , keys
-        , values
-        , toList
-        , fromList
-          -- core `List`
-        , cons
-        , head
-        , tail
-        , indexedMap
-        , filterMap
-        , length
-        , reverse
-        , all
-        , any
-        , append
-        , concat
-        , sum
-        , product
-        , maximum
-        , minimum
-        , take
-        , drop
-        , sort
-        , sortBy
-        , sortWith
-          -- list-oriented
-        , getAt
-        , getKeyAt
-        , indexOfKey
-        , insertAfter
-        , insertBefore
-        , next
-        , previous
-        , reorder
-        , RelativePosition(..)
-        , relativePosition
-        , insertRelativeTo
-        , atRelativePosition
-          -- JSON
-        , decodeObject
-        , decodeWithKeys
-        , decodeKeysAndValues
-        , decodeArray
-        , decodeArray2
-          -- Conversion
-        , toAllDict
-        , toDict
-        , fromAllDict
-        , fromDict
-          -- Dict.Extra
-        , groupBy
-        , fromListBy
-        , removeWhen
-        , removeMany
-        , keepOnly
-        , mapKeys
-        )
+module AllDictList exposing
+    ( AllDictList, RelativePosition(..)
+    , eq, fullEq, getOrd
+    , empty, singleton, insert, update, remove
+    , take, drop
+    , removeWhen, removeMany, keepOnly
+    , cons, insertAfter, insertBefore, insertRelativeTo
+    , append, concat
+    , union, intersect, diff, merge
+    , isEmpty, size, length
+    , all, any
+    , sum, product, maximum, minimum
+    , member, get, getAt, getKeyAt
+    , indexOfKey, relativePosition, atRelativePosition
+    , head, tail
+    , next, previous
+    , map, mapKeys, foldl, foldr, filter, partition
+    , indexedMap, filterMap, reverse, reorder
+    , sort, sortBy, sortWith
+    , keys, values, toList, fromList, fromListBy, groupBy
+    , toAllDict, fromAllDict
+    , toDict, fromDict
+    , decodeObject, decodeArray, decodeArray2, decodeWithKeys, decodeKeysAndValues
+    )
 
 {-| Have you ever wanted an `AllDict`, but you need to maintain an arbitrary
 ordering of keys? Or, a `List`, but you want to efficiently lookup values
@@ -169,8 +111,7 @@ Functions that help to decode a dictionary.
 
 import AllDict exposing (AllDict)
 import Dict exposing (Dict)
-import Json.Decode exposing (Decoder, keyValuePairs, value, decodeValue)
-import Json.Decode as Json18
+import Json.Decode as Json18 exposing (Decoder, decodeValue, keyValuePairs, value)
 import List.Extra
 import Maybe as Maybe18
 import Set exposing (Set)
@@ -219,7 +160,7 @@ type RelativePosition k
 
 
 {-| Turn any object into a dictionary of key-value pairs, including inherited
-enumerable properties. Fails if *any* value can't be decoded with the given
+enumerable properties. Fails if _any_ value can't be decoded with the given
 decoder.
 
 Unfortunately, it is not possible to preserve the apparent order of the keys in
@@ -258,16 +199,16 @@ decodeWithKeys ord keys func =
                     -- If we had an error, and we have another one, combine them
                     Err <| err1 ++ "\n" ++ err2
     in
-        value
-            |> Json18.andThen
-                (\jsonValue ->
-                    case List.foldl (go jsonValue) (Ok (empty ord)) keys of
-                        Ok result ->
-                            Json.Decode.succeed result
+    value
+        |> Json18.andThen
+            (\jsonValue ->
+                case List.foldl (go jsonValue) (Ok (empty ord)) keys of
+                    Ok result ->
+                        Json.Decode.succeed result
 
-                        Err err ->
-                            Json.Decode.fail err
-                )
+                    Err err ->
+                        Json.Decode.fail err
+            )
 
 
 {-| Like `decodeWithKeys`, but you supply a decoder for the keys, rather than the keys themselves.
@@ -289,7 +230,7 @@ will be the order of the JSON array.
 decodeArray : (k -> comparable) -> (v -> k) -> Decoder v -> Decoder (AllDictList k v comparable)
 decodeArray ord keyMapper valueDecoder =
     Json.Decode.map
-        (List.map (\value -> ( keyMapper value, value )) >> (fromList ord))
+        (List.map (\value -> ( keyMapper value, value )) >> fromList ord)
         (Json.Decode.list valueDecoder)
 
 
@@ -299,7 +240,7 @@ should decode the value.
 -}
 decodeArray2 : (k -> comparable) -> Decoder k -> Decoder v -> Decoder (AllDictList k v comparable)
 decodeArray2 ord keyDecoder valueDecoder =
-    Json18.map2 (,) keyDecoder valueDecoder
+    Json18.map2 (\a b -> ( a, b )) keyDecoder valueDecoder
         |> Json.Decode.list
         |> Json.Decode.map (fromList ord)
 
@@ -354,12 +295,12 @@ indexedMap func dictlist =
                 (key :: list)
             )
     in
-        -- We need to foldl, because the first element should get the 0 index.
-        -- But we build up the resulting list with `::`, for efficiency, so
-        -- we reverse once at the end.
-        foldl go ( 0, emptyWithOrdFrom dictlist ) dictlist
-            |> second
-            |> reverse
+    -- We need to foldl, because the first element should get the 0 index.
+    -- But we build up the resulting list with `::`, for efficiency, so
+    -- we reverse once at the end.
+    foldl go ( 0, emptyWithOrdFrom dictlist ) dictlist
+        |> second
+        |> reverse
 
 
 {-| Apply a function that may succeed to all key-value pairs, but only keep
@@ -373,7 +314,7 @@ filterMap func dictlist =
                 |> Maybe.map (\result -> cons key result acc)
                 |> Maybe.withDefault acc
     in
-        foldr go (emptyWithOrdFrom dictlist) dictlist
+    foldr go (emptyWithOrdFrom dictlist) dictlist
 
 
 {-| The number of key-value pairs in the dictionary.
@@ -410,10 +351,11 @@ any func (AllDictList dict list) =
                 first :: rest ->
                     if func first (unsafeGet first dict) then
                         True
+
                     else
                         go rest
     in
-        go list
+    go list
 
 
 {-| Put two dictionaries together.
@@ -437,10 +379,11 @@ append t1 t2 =
             -- We're right-favouring, so only act if the key is not already present
             if member key acc then
                 acc
+
             else
                 cons key value acc
     in
-        foldr go t2 t1
+    foldr go t2 t1
 
 
 {-| Concatenate a bunch of dictionaries into a single dictionary.
@@ -487,7 +430,7 @@ maximum (AllDictList dict list) =
                 Just bestSoFar ->
                     Just <| max bestSoFar value
     in
-        AllDict.foldl go Nothing dict
+    AllDict.foldl go Nothing dict
 
 
 {-| Find the minimum value. Returns `Nothing` if empty.
@@ -503,10 +446,10 @@ minimum (AllDictList dict list) =
                 Just bestSoFar ->
                     Just <| min bestSoFar value
     in
-        AllDict.foldl go Nothing dict
+    AllDict.foldl go Nothing dict
 
 
-{-| Take the first *n* values.
+{-| Take the first _n_ values.
 -}
 take : Int -> AllDictList k v comparable -> AllDictList k v comparable
 take n (AllDictList dict list) =
@@ -520,10 +463,10 @@ take n (AllDictList dict list) =
         go key =
             AllDict.insert key (unsafeGet key dict)
     in
-        AllDictList newDict newList
+    AllDictList newDict newList
 
 
-{-| Drop the first *n* values.
+{-| Drop the first _n_ values.
 -}
 drop : Int -> AllDictList k v comparable -> AllDictList k v comparable
 drop n (AllDictList dict list) =
@@ -537,7 +480,7 @@ drop n (AllDictList dict list) =
         go key =
             AllDict.insert key (unsafeGet key dict)
     in
-        AllDictList newDict newList
+    AllDictList newDict newList
 
 
 {-| Sort values from lowest to highest
@@ -590,7 +533,7 @@ indexOfKey key (AllDictList dict list) =
         target =
             ord key
     in
-        List.Extra.findIndex (\k -> ord k == target) list
+    List.Extra.findIndex (\k -> ord k == target) list
 
 
 {-| Given a key, get the key and value at the next position.
@@ -632,7 +575,7 @@ reorder newKeys dictlist =
                 Nothing ->
                     acc
     in
-        List.foldr go (emptyWithOrdFrom dictlist) newKeys
+    List.foldr go (emptyWithOrdFrom dictlist) newKeys
 
 
 {-| Gets the key at the specified index (0-based).
@@ -674,6 +617,7 @@ insertAfter afterKey key value (AllDictList dict list) =
                     -- We're inserting the key after itself, so we can
                     -- short-circuit ...  the list doesn't change.
                     list
+
                 else
                     let
                         -- We have the afterKey, and we may or may not have the
@@ -688,25 +632,26 @@ insertAfter afterKey key value (AllDictList dict list) =
                         afterKeyComparable =
                             ord afterKey
                     in
-                        -- We need to find the afterKey
-                        case List.Extra.findIndex (\k -> ord k == afterKeyComparable) listWithoutKey of
-                            Just index ->
-                                -- We found the existing element, so take apart
-                                -- the list and put it back together, with our
-                                -- key in the right place
-                                List.take (index + 1) listWithoutKey
-                                    ++ (key :: List.drop (index + 1) listWithoutKey)
+                    -- We need to find the afterKey
+                    case List.Extra.findIndex (\k -> ord k == afterKeyComparable) listWithoutKey of
+                        Just index ->
+                            -- We found the existing element, so take apart
+                            -- the list and put it back together, with our
+                            -- key in the right place
+                            List.take (index + 1) listWithoutKey
+                                ++ (key :: List.drop (index + 1) listWithoutKey)
 
-                            Nothing ->
-                                -- This shouldn't happen, since we tested that
-                                -- the afterKey was present.  So, crash.
-                                Debug.crash "Internal error: AllDictList list not in sync with dict"
+                        Nothing ->
+                            -- This shouldn't happen, since we tested that
+                            -- the afterKey was present.  So, crash.
+                            Debug.crash "Internal error: AllDictList list not in sync with dict"
+
             else
                 -- We didn't have the afterKey. So, just remove the key (in
                 -- case it is present) and add it to the end.
                 removeKey key dict list ++ [ key ]
     in
-        AllDictList newDict newList
+    AllDictList newDict newList
 
 
 {-| Insert a key-value pair into a dictionary, replacing an existing value if
@@ -729,6 +674,7 @@ insertBefore beforeKey key value (AllDictList dict list) =
                     -- We're inserting the key after itself, so we can
                     -- short-circuit ...  the list doesn't change.
                     list
+
                 else
                     let
                         -- We have the beforeKey, and we may or may not have
@@ -743,25 +689,26 @@ insertBefore beforeKey key value (AllDictList dict list) =
                         beforeKeyComparable =
                             ord beforeKey
                     in
-                        -- We need to find the beforeKey
-                        case List.Extra.findIndex (\k -> ord k == beforeKeyComparable) listWithoutKey of
-                            Just index ->
-                                -- We found the existing element, so take apart
-                                -- the list and put it back together, with our
-                                -- key in the right place
-                                List.take index listWithoutKey
-                                    ++ (key :: List.drop index listWithoutKey)
+                    -- We need to find the beforeKey
+                    case List.Extra.findIndex (\k -> ord k == beforeKeyComparable) listWithoutKey of
+                        Just index ->
+                            -- We found the existing element, so take apart
+                            -- the list and put it back together, with our
+                            -- key in the right place
+                            List.take index listWithoutKey
+                                ++ (key :: List.drop index listWithoutKey)
 
-                            Nothing ->
-                                -- This shouldn't happen, since we tested that
-                                -- the afterKey was present.  So, crash.
-                                Debug.crash "Internal error: AllDictList list not in sync with dict"
+                        Nothing ->
+                            -- This shouldn't happen, since we tested that
+                            -- the afterKey was present.  So, crash.
+                            Debug.crash "Internal error: AllDictList list not in sync with dict"
+
             else
                 -- We didn't have the beforeKey. So, just remove the key (in
                 -- case it is present) and add it to the beginning.
                 key :: removeKey key dict list
     in
-        AllDictList newDict newList
+    AllDictList newDict newList
 
 
 {-| Get the position of a key relative to the previous key (or next, if the
@@ -829,7 +776,7 @@ empty ord =
 -}
 eq : AllDictList k v comparable -> AllDictList k v comparable -> Bool
 eq first second =
-    (toList first) == (toList second)
+    toList first == toList second
 
 
 {-| Element equality, according to the ord functions.
@@ -843,7 +790,7 @@ fullEq first second =
         secondWithOrd =
             List.map (Tuple.mapFirst (getOrd second)) (toList second)
     in
-        firstWithOrd == secondWithOrd
+    firstWithOrd == secondWithOrd
 
 
 {-| Get the ord function used by the dictionary.
@@ -899,11 +846,12 @@ insert key value (AllDictList dict list) =
             if AllDict.member key dict then
                 -- We know this key, so leave it where it was
                 list
+
             else
                 -- We don't know this key, so also insert it at the end of the list.
                 list ++ [ key ]
     in
-        AllDictList newDict newList
+    AllDictList newDict newList
 
 
 {-| Remove a key-value pair from a dictionary. If the key is not found,
@@ -1029,14 +977,14 @@ merge leftFunc bothFunc rightFunc leftDict (AllDictList rightDict rightList) ini
                     -- If we don't have it anymore, it was dealt with on the left
                     accumRight
     in
-        -- We start on the left, because we have said that the order we'll follow
-        -- is left-favouring.
-        foldl goLeft ( rightDict, initialResult ) leftDict
-            |> (\( remainingRight, accumLeft ) ->
-                    -- Now, we go through the right hand side, for those things that
-                    -- weren't also on the left.
-                    List.foldl (goRight remainingRight) accumLeft rightList
-               )
+    -- We start on the left, because we have said that the order we'll follow
+    -- is left-favouring.
+    foldl goLeft ( rightDict, initialResult ) leftDict
+        |> (\( remainingRight, accumLeft ) ->
+                -- Now, we go through the right hand side, for those things that
+                -- weren't also on the left.
+                List.foldl (goRight remainingRight) accumLeft rightList
+           )
 
 
 
@@ -1059,7 +1007,7 @@ foldl func accum (AllDictList dict list) =
         go key acc =
             func key (unsafeGet key dict) acc
     in
-        List.foldl go accum list
+    List.foldl go accum list
 
 
 {-| Fold over the key-value pairs in a dictionary, in order from the last
@@ -1076,7 +1024,7 @@ foldr func accum (AllDictList dict list) =
                 Nothing ->
                     Debug.crash "Internal error: AllDictList list not in sync with dict"
     in
-        List.foldr go accum list
+    List.foldr go accum list
 
 
 {-| Keep a key-value pair when it satisfies a predicate.
@@ -1087,10 +1035,11 @@ filter predicate dictList =
         add key value dict =
             if predicate key value then
                 insert key value dict
+
             else
                 dict
     in
-        foldl add (emptyWithOrdFrom dictList) dictList
+    foldl add (emptyWithOrdFrom dictList) dictList
 
 
 {-| Partition a dictionary according to a predicate. The first dictionary
@@ -1103,13 +1052,14 @@ partition predicate dict =
         add key value ( t1, t2 ) =
             if predicate key value then
                 ( insert key value t1, t2 )
+
             else
                 ( t1, insert key value t2 )
 
         emptyLikeDict =
             emptyWithOrdFrom dict
     in
-        foldl add ( emptyLikeDict, emptyLikeDict ) dict
+    foldl add ( emptyLikeDict, emptyLikeDict ) dict
 
 
 
@@ -1175,7 +1125,7 @@ fromDict dict =
         allDict =
             Dict.foldl AllDict.insert (AllDict.empty identity) dict
     in
-        AllDictList allDict (Dict.keys dict)
+    AllDictList allDict (Dict.keys dict)
 
 
 
@@ -1229,7 +1179,7 @@ fromListBy ord keyfn xs =
 
 {-| Remove elements which satisfies the predicate.
 
-    removeWhen (\_ v -> v == 1) (AllDictList.fromList [("Mary", 1), ("Jack", 2), ("Jill", 1)]) == AllDictList.fromList [("Jack", 2)]
+    removeWhen (\_ v -> v == 1) (AllDictList.fromList [ ( "Mary", 1 ), ( "Jack", 2 ), ( "Jill", 1 ) ]) == AllDictList.fromList [ ( "Jack", 2 ) ]
 
 -}
 removeWhen : (k -> v -> Bool) -> AllDictList k v comparable -> AllDictList k v comparable
@@ -1264,7 +1214,7 @@ mapKeys ord keyMapper dict =
         addKey key value d =
             insert (keyMapper key) value d
     in
-        foldl addKey (empty ord) dict
+    foldl addKey (empty ord) dict
 
 
 
@@ -1303,11 +1253,12 @@ removeKey key dict list =
         keyComparable =
             ord key
     in
-        if AllDict.member key dict then
-            List.filter (\k -> ord k /= keyComparable) list
-        else
-            -- If the key wasn't present, we can skip the removal
-            list
+    if AllDict.member key dict then
+        List.filter (\k -> ord k /= keyComparable) list
+
+    else
+        -- If the key wasn't present, we can skip the removal
+        list
 
 
 {-| Should we consider the two keys to be equal?
@@ -1318,4 +1269,4 @@ equalKeys key1 key2 dict =
         ord =
             AllDict.getOrd dict
     in
-        ord key1 == ord key2
+    ord key1 == ord key2

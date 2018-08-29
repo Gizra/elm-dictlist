@@ -1,4 +1,4 @@
-module DictListTests exposing (..)
+module DictListTests exposing (Thing, Things, ValueWithId, ValueWithoutId, allTest, anyTest, appendTest, concatTest, consTest, decodeKeyForArray2, decodeValueWithId, decodeValueWithoutId, dropTest, filterMapTest, fuzzDictList, fuzzIntDictList, getAtTest, getKeyAtTest, getTest, headTailConsTest, indexOfKeyTest, indexedMapTest, insertAfterFuzzTest, insertAfterTest, insertBeforeFuzzTest, insertBeforeTest, insertTest, isEmptyTest, jsonArray2AndExpectedResult, jsonArrayAndExpectedResult, jsonKeysObjectAndExpectedResult, jsonObjectAndExpectedResult, jsonTests, lengthTest, maximumTest, memberTest, minimumTest, nextTest, pair1, pair2, pair3, pairs, previousTest, productTest, removeFuzzTest, removeTest, reorderTest, reverseTest, sizeTest, sortByTest, sortTest, sortWithTest, sumTest, takeTest, unionTest)
 
 {-| These are tests of specifically `DictList` behaviour ... that is,
 things not necessarily tested by the `DictTests` or the `ListTests`.
@@ -51,6 +51,7 @@ jsonObjectAndExpectedResult =
                     go ( key, value ) ( json, expected ) =
                         if DictList.member (toString key) expected then
                             ( json, expected )
+
                         else
                             ( ("\"" ++ toString key ++ "\": " ++ toString value) :: json
                             , DictList.cons (toString key) value expected
@@ -78,6 +79,7 @@ jsonArrayAndExpectedResult =
                     go ( key, value ) ( json, expected ) =
                         if DictList.member key expected then
                             ( json, expected )
+
                         else
                             ( ("{\"id\": " ++ toString key ++ ", \"value\": " ++ toString value ++ "}") :: json
                             , DictList.cons key (ValueWithId key value) expected
@@ -130,6 +132,7 @@ jsonArray2AndExpectedResult =
                     go ( key, value ) ( json, expected ) =
                         if DictList.member key expected then
                             ( json, expected )
+
                         else
                             ( ("{\"id\": " ++ toString key ++ ", \"value\": " ++ toString value ++ "}") :: json
                             , DictList.cons key (ValueWithoutId value) expected
@@ -163,8 +166,8 @@ decodeValueWithoutId =
 
 {-| Like `jsonObjectAndExpectedResult`, but the JSON looks like this:
 
-    { keys: [ ]
-    , dict: {  }
+    { keys = []
+    , dict = {}
     }
 
 ... that is, we list an array of keys separately, so that we can preserve
@@ -181,6 +184,7 @@ jsonKeysObjectAndExpectedResult =
                     go ( key, value ) ( jsonKeys, jsonDict, expected ) =
                         if DictList.member (toString key) expected then
                             ( jsonKeys, jsonDict, expected )
+
                         else
                             ( ("\"" ++ toString key ++ "\"") :: jsonKeys
                             , ("\"" ++ toString key ++ "\": " ++ toString value) :: jsonDict
@@ -246,6 +250,7 @@ consTest =
                 resultSize =
                     if DictList.member key dictList then
                         DictList.size dictList
+
                     else
                         DictList.size dictList + 1
 
@@ -276,13 +281,14 @@ headTailConsTest =
         \subject ->
             let
                 run =
-                    Maybe.map2 (uncurry DictList.cons)
+                    Maybe.map2 (\( a, b ) -> DictList.cons a b)
                         (DictList.head subject)
                         (DictList.tail subject)
 
                 expected =
                     if DictList.size subject == 0 then
                         Nothing
+
                     else
                         Just subject
             in
@@ -1017,6 +1023,7 @@ insertBeforeFuzzTest =
                 resultSize =
                     if DictList.member key dictList then
                         DictList.size dictList
+
                     else
                         DictList.size dictList + 1
 
@@ -1055,6 +1062,7 @@ insertAfterFuzzTest =
                 resultSize =
                     if DictList.member key dictList then
                         DictList.size dictList
+
                     else
                         DictList.size dictList + 1
 
@@ -1227,6 +1235,7 @@ removeFuzzTest =
                 resultSize =
                     if DictList.member key dictList then
                         DictList.size dictList - 1
+
                     else
                         DictList.size dictList
 
